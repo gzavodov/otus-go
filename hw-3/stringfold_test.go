@@ -18,11 +18,14 @@ func TestUnFold(t *testing.T) {
 		PackerTest{In: "abcd", Out: "abcd"},
 		PackerTest{In: "1a1", Out: "a"},
 		PackerTest{In: "45", Out: ""},
+		PackerTest{In: `\q\w\e`, Out: `qwe`},
 		PackerTest{In: `qwe\4\5`, Out: `qwe45`},
 		PackerTest{In: `qwe\45`, Out: `qwe44444`},
 		PackerTest{In: `qwe\\002`, Out: `qwe\\`},
 		PackerTest{In: `qwe\\6`, Out: `qwe\\\\\\`},
 		PackerTest{In: `qwe\\10`, Out: `qwe\\\\\\\\\\`},
+		PackerTest{In: `\\6`, Out: `\\\\\\`},
+		PackerTest{In: `\\\5`, Out: `\5`},
 	}
 
 	packer := StringPacker{}

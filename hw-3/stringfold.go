@@ -22,11 +22,11 @@ func (p *StringPacker) Unpack(s string) (string, error) {
 		}
 
 		length := len(codes)
-		isDigit := unicode.IsDigit(code)
-		isEscaped := i > 0 && s[i-1] == '\\' && (i < 2 || s[i-2] != '\\')
 
+		isDigit := unicode.IsDigit(code)
 		if isDigit {
 			if length > 0 {
+				isEscaped := i > 0 && (p.getPrecedingSlashCount(s, i)%2) > 0
 				if isEscaped {
 					p.addToEnd(&codes, code, 1)
 				} else if multiplierOffset < 0 {
@@ -50,7 +50,9 @@ func (p *StringPacker) Unpack(s string) (string, error) {
 			continue
 		}
 
-		p.addToEnd(&codes, code, 1)
+		if code != '\\' || (p.getPrecedingSlashCount(s, i)%2) > 0 {
+			p.addToEnd(&codes, code, 1)
+		}
 	}
 
 	if multiplierOffset >= 0 {
@@ -63,6 +65,17 @@ func (p *StringPacker) Unpack(s string) (string, error) {
 	}
 
 	return string(codes), nil
+}
+
+func (p *StringPacker) getPrecedingSlashCount(s string, offset int) int {
+	result := 0
+	for i := offset - 1; i >= 0; i-- {
+		if s[i] != '\\' {
+			break
+		}
+		result++
+	}
+	return result
 }
 
 func (p *StringPacker) applyMultiplier(codes *[]rune, multiplier int) {
