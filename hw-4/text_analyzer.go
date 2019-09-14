@@ -1,9 +1,9 @@
 package hw4
 
 import (
-	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 // Counter is auxiliary structure for counting frequency of words.
@@ -17,7 +17,7 @@ type TextAnalyzer struct{}
 
 // Regular expression for parsing words in text.
 // A word is a sequence of one more letters, numbers, dashes or underscores.
-var wordRegexp = regexp.MustCompile(`[\p{L}\p{N}\p{Pd}_]+`)
+//var wordRegexp = regexp.MustCompile(`[\p{L}\p{N}\p{Pd}_]+`)
 
 // GetMostCommonWords returns most frequent words in string defined by 'text' argument.
 // Maximum words quantity in result defined by 'limit' argument. If limit <= 0 all the words of text will be returned.
@@ -25,12 +25,21 @@ var wordRegexp = regexp.MustCompile(`[\p{L}\p{N}\p{Pd}_]+`)
 // If words in result have same frequency they will be sorted by alphabetical ascending order.
 func (a *TextAnalyzer) GetMostCommonWords(text string, limit int) []string {
 	//Split the source text into words.
-	words := wordRegexp.FindAllString(text, -1)
+	//words := wordRegexp.FindAllString(text, -1)
+	words := strings.FieldsFunc(
+		text,
+		func(c rune) bool { return unicode.IsSpace(c) || unicode.IsPunct(c) },
+	)
 
 	// Map provides quick access to counter object by word
-	counterMap := map[string]*Counter{}
+	counterMap := make(map[string]*Counter)
 	// List is required for final sorting by frequency of words in the text
-	counterList := []*Counter{}
+	counterListCapacity := len(words)
+	if counterListCapacity > 512 {
+		counterListCapacity /= 2
+	}
+
+	counterList := make([]*Counter, 0, counterListCapacity)
 
 	for _, word := range words {
 		// Case of word is ignored. The words 'The' and 'the' are treated as same.
@@ -65,7 +74,7 @@ func (a *TextAnalyzer) GetMostCommonWords(text string, limit int) []string {
 		rightBound = limit
 	}
 
-	result := []string{}
+	result := make([]string, 0, rightBound)
 	for i := 0; i < rightBound; i++ {
 		result = append(result, counterList[i].Word)
 	}
