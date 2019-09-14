@@ -49,7 +49,7 @@ func (a *TextAnalyzer) GetMostCommonWords(text string, limit int) []string {
 	// Sorting by frequency of words is reverted to provide descending order.
 	// It uses operation "greater then" instead of "less than".
 	// If words have same frequency they will be sorted by natural alphabetical (ascending) order.
-	sort.SliceStable(
+	sort.Slice(
 		counterList,
 		func(i, j int) bool {
 			if counterList[i].Count == counterList[j].Count {
