@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gzavodov/otus-go/hw-10/dd"
+	"github.com/gzavodov/otus-go/dd"
 )
 
 func main() {

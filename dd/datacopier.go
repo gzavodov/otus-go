@@ -94,5 +94,9 @@ func (d *DataCopier) Copy(from string, to string, offset int64, limit int64) err
 	}
 	writer.Flush()
 
+	if length > 0 {
+		fmt.Println()
+	}
+
 	return nil
 }
