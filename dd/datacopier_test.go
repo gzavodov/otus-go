@@ -30,11 +30,24 @@ func TestFileCopying(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		resultBytes, err := ioutil.ReadFile(test.DstPath)
+		//Reading of result file and truncate
+		resultFile, err := os.OpenFile(test.DstPath, os.O_RDWR, 0666)
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		resultBytes, err := ioutil.ReadAll(resultFile)
+		if err != nil {
+			resultFile.Close()
+			t.Fatal(err)
+		}
+
+		resultFile.Truncate(0)
+		resultFile.Sync()
+
+		resultFile.Close()
+
+		//Reading of reference file
 		expectedBytes, err := ioutil.ReadFile(test.ResultPath)
 		if err != nil {
 			t.Fatal(err)
@@ -43,14 +56,5 @@ func TestFileCopying(t *testing.T) {
 		if !bytes.Equal(resultBytes, expectedBytes) {
 			t.Error("result file does not contain expected data")
 		}
-
-		file, err := os.OpenFile(test.DstPath, os.O_WRONLY, 0666)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		file.Truncate(0)
-		file.Sync()
-		file.Close()
 	}
 }

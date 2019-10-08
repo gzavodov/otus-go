@@ -10,9 +10,13 @@ import (
 
 const barChar = string('\U000025A0')
 
+// DataCopier is simple utility allows copy data from one file to another. Provides only one function Copy.
 type DataCopier struct {
 }
 
+// Copy copies data from source file (defined by from argument) to destination file (defined by to argument).
+// If offset argument greater than zero function will skip defined quantity of bytes before start.
+// If limit argument greater than zero function will end after defined quantity of bytes will be processed.
 func (d *DataCopier) Copy(from string, to string, offset int64, limit int64) error {
 	src, err := os.OpenFile(from, os.O_RDONLY, 0)
 	if err != nil {
@@ -86,7 +90,7 @@ func (d *DataCopier) Copy(from string, to string, offset int64, limit int64) err
 		}
 
 		percents := float32(100*length) / float32(limit)
-		fmt.Printf("\rCopying data: %s [%.2f%%]", strings.Repeat(barChar, int(percents)), percents)
+		fmt.Printf("\rCopying: %s [%.2f%%]", strings.Repeat(barChar, int(percents)), percents)
 
 		if length == limit {
 			break

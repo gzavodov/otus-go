@@ -16,6 +16,12 @@ func main() {
 
 	flag.Parse()
 
+	if *from == "" || *to == "" {
+		fmt.Println("Usage:", os.Args[0], "-from [source file]", "-to [destination file]")
+		fmt.Println("Help:", os.Args[0], "-help")
+		return
+	}
+
 	copier := dd.DataCopier{}
 	err := copier.Copy(*from, *to, int64(*offset), int64(*limit))
 	if err != nil {
