@@ -1,0 +1,4 @@
+github.com/gzavodov/otus-go v0.0.0-20191013213848-23fb78243694 h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
+github.com/gzavodov/otus-go/dd v0.0.0-20191013213848-23fb78243694/go.mod h1:ukgN+LQ1S99VxPClwA7R81BmpXLvDieNfB5tfPWl3O0=
+github.com/gzavodov/otus-go/envdir v0.0.0-20191013213848-23fb78243694 h1:TqasgAavX37ytwlR2X1lvj4mykERm30OrkbHX6Tw45M=
+github.com/gzavodov/otus-go/envdir v0.0.0-20191013213848-23fb78243694/go.mod h1:11EXQgYlrwjBNpbGuHo149Qcv2Xoc8XdXYGv3dFUR0g=
