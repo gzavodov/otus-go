@@ -2,6 +2,7 @@ package envdir
 
 import (
 	"io/ioutil"
+	"os"
 	"regexp"
 	"runtime"
 	"testing"
@@ -22,6 +23,8 @@ func TestEnvironmentModifier(t *testing.T) {
 		dirPath = "./test/env"
 		executablePath = "./test/linux/test.sh"
 		expectedFilePath = "./test/test.txt"
+
+		os.Chmod(executablePath, 0777)
 	}
 
 	envmodifier := EnvModifier{}
