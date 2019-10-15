@@ -19,7 +19,7 @@ func main() {
 	}
 
 	if path == "" || executable == "" {
-		fmt.Println("Usage:", os.Args[0], "<environment variables dir>", "<executable>")
+		fmt.Println("Usage:", os.Args[0], "<environment variables directory>", "<executable>")
 		return
 	}
 
@@ -29,5 +29,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Print(string(output))
+	fmt.Printf("%s\n", output)
 }
