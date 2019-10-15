@@ -10,21 +10,24 @@ import (
 
 func main() {
 
-	path := ""
-	executable := ""
+	var path string
+	var executable string
+
 	if len(os.Args) >= 3 {
 		path = os.Args[1]
 		executable = os.Args[2]
 	}
 
 	if path == "" || executable == "" {
-		fmt.Println("Usage:", os.Args[0], "<environment directory>", "<executable>")
+		fmt.Println("Usage:", os.Args[0], "<environment variables dir>", "<executable>")
 		return
 	}
 
 	envmodifier := envdir.EnvModifier{}
-	_, err := envmodifier.Run(path, executable)
+	output, err := envmodifier.Run(path, executable)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Print(string(output))
 }
