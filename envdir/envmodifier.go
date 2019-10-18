@@ -32,8 +32,7 @@ func (m *EnvModifier) Run(dirPath string, executablePath string) ([]byte, error)
 		return nil, err
 	}
 
-	variables := make(map[string]string)
-
+	variables := os.Environ()
 	for _, fileInfo := range fileInfos {
 		if fileInfo.IsDir() {
 			continue
@@ -46,22 +45,12 @@ func (m *EnvModifier) Run(dirPath string, executablePath string) ([]byte, error)
 			return nil, err
 		}
 
-		variables[fileInfo.Name()] = s
+		variables = append(variables, fmt.Sprintf("%s=%s", fileInfo.Name(), s))
 	}
 
-	for key, value := range variables {
-		//fmt.Printf("os.Setenv('%s', '%s')\n", key, value)
-		os.Setenv(key, value)
-	}
-
-	//fmt.Printf("exec.Command('%s')\n", executablePath)
 	cmd := exec.Command(executablePath)
-
+	cmd.Env = variables
 	output, err := cmd.Output()
-
-	for key := range variables {
-		os.Unsetenv(key)
-	}
 
 	return output, err
 }
