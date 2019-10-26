@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+//CalendarEvent Calendar Event Model
 type CalendarEvent struct {
 	ID          uint32
 	Title       string
