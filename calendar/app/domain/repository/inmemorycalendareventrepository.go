@@ -135,6 +135,7 @@ func (r *InMemoryCalendarEventRepository) Purge() error {
 	defer r.mu.Unlock()
 
 	r.records = make(map[uint32]*CalendarEventRecord)
+	r.lastRecordID = 0
 
 	return nil
 }
