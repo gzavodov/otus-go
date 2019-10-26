@@ -115,6 +115,8 @@ func TestInMemoryRepository(t *testing.T) {
 
 			for i := 0; i < length; i++ {
 				if *resultEvents[i] != *initialEvents[i] {
+					t.Logf("initial[%d]: %v\n", i, *initialEvents[i])
+					t.Logf("result[%d]: %v\n", i, *resultEvents[i])
 					t.Error("FAILURE: Initail calendar event is not equals repository event\n")
 				}
 			}

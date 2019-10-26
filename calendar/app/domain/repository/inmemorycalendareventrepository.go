@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -74,6 +75,11 @@ func (r *InMemoryCalendarEventRepository) ReadAll() []*model.CalendarEvent {
 	for _, record := range r.records {
 		list = append(list, NewCalendarEventModel(record))
 	}
+
+	sort.SliceStable(
+		list,
+		func(i, j int) bool { return list[i].ID < list[j].ID },
+	)
 
 	return list
 }
