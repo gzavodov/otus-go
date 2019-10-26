@@ -43,7 +43,7 @@ func (r *InMemoryEventRepository) Create(m *model.CalendarEvent) error {
 	return nil
 }
 
-func (r *InMemoryEventRepository) Read(ID uint32) (model.CalendarEvent, error) {
+func (r *InMemoryEventRepository) Read(ID uint32) (*model.CalendarEvent, error) {
 	if ID <= 0 {
 		return nil, fmt.Errorf("parameter 'ID' is invalid: %d", ID)
 	}
@@ -70,7 +70,7 @@ func (r *InMemoryEventRepository) ReadAll() []*model.CalendarEvent {
 	return list
 }
 
-func (r *InMemoryEventRepository) Update(m model.CalendarEvent) error {
+func (r *InMemoryEventRepository) Update(m *model.CalendarEvent) error {
 	if m == nil {
 		return errors.New("parameter 'm' must be not null pointer")
 	}
