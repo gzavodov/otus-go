@@ -9,15 +9,15 @@ import (
 	"github.com/gzavodov/otus-go/calendar/app/domain/model"
 )
 
-//InMemoryCalendarEventRepository simple in-memory implementation of CalendarEventRepository interface
+//InMemoryCalendarEventRepository thread safe in-memory implementation of CalendarEventRepository interface
 type InMemoryCalendarEventRepository struct {
 	mu           *sync.RWMutex
 	records      map[uint32]*CalendarEventRecord
 	lastRecordID uint32
 }
 
-//NewInMemoryEventRepository creates new in-memory EventRepository
-func NewInMemoryEventRepository() *InMemoryCalendarEventRepository {
+//NewInMemoryCalendarEventRepository creates new in-memory CalendarEventRepository
+func NewInMemoryCalendarEventRepository() *InMemoryCalendarEventRepository {
 	return &InMemoryCalendarEventRepository{
 		mu:           &sync.RWMutex{},
 		records:      make(map[uint32]*CalendarEventRecord),
@@ -36,14 +36,15 @@ func (r *InMemoryCalendarEventRepository) Create(m *model.CalendarEvent) error {
 	defer r.mu.Unlock()
 
 	record := NewCalendarEventRecord(m)
-
 	record.Created = time.Now()
 	record.LastUpdated = record.Created
 
 	r.lastRecordID++
 	record.ID = r.lastRecordID
 	m.ID = record.ID
+
 	r.records[record.ID] = record
+
 	return nil
 }
 
@@ -73,6 +74,7 @@ func (r *InMemoryCalendarEventRepository) ReadAll() []*model.CalendarEvent {
 	for _, record := range r.records {
 		list = append(list, NewCalendarEventModel(record))
 	}
+
 	return list
 }
 
@@ -97,6 +99,7 @@ func (r *InMemoryCalendarEventRepository) Update(m *model.CalendarEvent) error {
 
 	record.CopyFromModel(m)
 	record.LastUpdated = time.Now()
+
 	return nil
 }
 
@@ -114,6 +117,7 @@ func (r *InMemoryCalendarEventRepository) Delete(ID uint32) error {
 	}
 
 	delete(r.records, ID)
+
 	return nil
 }
 
@@ -131,5 +135,6 @@ func (r *InMemoryCalendarEventRepository) Purge() error {
 	defer r.mu.Unlock()
 
 	r.records = make(map[uint32]*CalendarEventRecord)
+
 	return nil
 }
