@@ -8,14 +8,14 @@ import (
 
 //CalendarEventRecord repository record for Calendar Event
 type CalendarEventRecord struct {
-	ID          uint32
-	Title       string
-	Description string
-	Location    string
-	Time        time.Time
-	CalendarID  uint32
-	Created     time.Time
-	LastUpdated time.Time
+	ID          uint32    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Location    string    `json:"location"`
+	Time        time.Time `json:"time"`
+	CalendarID  uint32    `json:"calendarId"`
+	Created     time.Time `json:"created"`
+	LastUpdated time.Time `json:"lastUpdated"`
 }
 
 //CopyFromModel copy fields from model to repository record

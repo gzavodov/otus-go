@@ -8,7 +8,7 @@ import (
 )
 
 func TestInMemoryRepository(t *testing.T) {
-	repo := NewInMemoryEventRepository()
+	repo := NewInMemoryCalendarEventRepository()
 
 	t.Run("Checking of EventRepository::Create",
 		func(t *testing.T) {

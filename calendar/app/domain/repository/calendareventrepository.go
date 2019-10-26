@@ -4,8 +4,8 @@ import (
 	"github.com/gzavodov/otus-go/calendar/app/domain/model"
 )
 
-//EventRepository Storage interface for Calendar Event
-type EventRepository interface {
+//CalendarEventRepository Storage interface for Calendar Event
+type CalendarEventRepository interface {
 	Create(*model.CalendarEvent) error
 	Read(uint32) (*model.CalendarEvent, error)
 	ReadAll() []*model.CalendarEvent

@@ -4,10 +4,10 @@ import "time"
 
 //CalendarEvent Calendar Event Model
 type CalendarEvent struct {
-	ID          uint32
-	Title       string
-	Description string
-	Location    string
-	Time        time.Time
-	CalendarID  uint32
+	ID          uint32    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Location    string    `json:"location"`
+	Time        time.Time `json:"time"`
+	CalendarID  uint32    `json:"calendarId"`
 }
