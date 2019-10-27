@@ -84,6 +84,15 @@ func (r *InMemoryCalendarEventRepository) ReadAll() []*model.CalendarEvent {
 	return list
 }
 
+//IsExists check if repository contains Calendar event with specified ID
+func (r *InMemoryCalendarEventRepository) IsExists(ID uint32) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	_, isFound := r.records[ID]
+	return isFound
+}
+
 //Update modifies Calendar Event in repository
 func (r *InMemoryCalendarEventRepository) Update(m *model.CalendarEvent) error {
 	if m == nil {
