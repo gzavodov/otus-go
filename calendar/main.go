@@ -58,7 +58,7 @@ func main() {
 	defer logger.Sync()
 
 	server := web.NewServer(config, logger)
-	err = server.Start(config.HTTPAddress)
+	err = server.Start()
 	if err != nil {
 		log.Fatalf("Could not initialize zap logger: %v", err)
 	}
