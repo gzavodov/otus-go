@@ -8,7 +8,13 @@ import (
 	"go.uber.org/zap"
 )
 
+func NewServer(c *Config, logger *zap.Logger) *Server {
+	server := &Server{Address: c.HTTPAddress, Logger: logger}
+	return server
+}
+
 type Server struct {
+	Address    string
 	Logger     *zap.Logger
 	HTTPServer *http.ServeMux
 }
