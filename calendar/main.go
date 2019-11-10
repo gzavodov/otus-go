@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("Could not read configuration file: %v", err)
 	}
 
-	config = &web.Config{}
+	config := &web.Config{}
 	if yaml.Unmarshal(configFile, config) != nil {
 		log.Fatalf("Could not internalize configuration file data: %v", err)
 	}
