@@ -60,6 +60,6 @@ func main() {
 	server := web.NewServer(config, logger)
 	err = server.Start(config.HTTPAddress)
 	if err != nil {
-		logger.Fatal("Could not start HTTP server", zap.Error(err))
+		log.Fatalf("Could not initialize zap logger: %v", err)
 	}
 }
