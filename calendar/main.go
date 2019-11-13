@@ -1,13 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"log"
 
 	"github.com/gzavodov/otus-go/calendar/app/web"
+	"github.com/gzavodov/otus-go/calendar/config"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -16,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	if *configFilePath == "" {
-		*configFilePath = "http_config.yml"
+		*configFilePath = "./config/config.development.json"
 	}
 
 	configFile, err := ioutil.ReadFile(*configFilePath)
@@ -24,8 +25,8 @@ func main() {
 		log.Fatalf("Could not read configuration file: %v", err)
 	}
 
-	config := &web.Config{}
-	if yaml.Unmarshal(configFile, config) != nil {
+	config := &config.Configuration{}
+	if json.Unmarshal(configFile, config) != nil {
 		log.Fatalf("Could not internalize configuration file data: %v", err)
 	}
 
@@ -57,7 +58,7 @@ func main() {
 	}
 	defer logger.Sync()
 
-	server := web.NewServer(config, logger)
+	server := web.NewServer(config.HTTPAddress, logger)
 	err = server.Start()
 	if err != nil {
 		log.Fatalf("Could not initialize zap logger: %v", err)

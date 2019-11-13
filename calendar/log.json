@@ -1,0 +1,2 @@
+{"level":"info","ts":1573671151.7442536,"caller":"web/server.go:33","msg":"Request handling","URL Path":"/hello/"}
+{"level":"info","ts":1573671151.8711748,"caller":"web/server.go:33","msg":"Request handling","URL Path":"/favicon.ico"}

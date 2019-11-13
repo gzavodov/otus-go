@@ -9,10 +9,11 @@ import (
 )
 
 //NewServer Creates new web server
-func NewServer(c *Config, logger *zap.Logger) *Server {
-	server := &Server{Address: c.HTTPAddress, Logger: logger}
+func NewServer(address string, logger *zap.Logger) *Server {
+	server := &Server{Address: address, Logger: logger}
 	return server
 }
+
 //Server Simple Web Server
 type Server struct {
 	Address    string
@@ -20,7 +21,7 @@ type Server struct {
 	HTTPServer *http.ServeMux
 }
 
-//Start Start handling of web requests 
+//Start Start handling of web requests
 func (h *Server) Start() error {
 	h.HTTPServer = http.NewServeMux()
 	h.HTTPServer.Handle("/", h)
