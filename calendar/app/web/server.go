@@ -31,7 +31,15 @@ func (h *Server) Start() error {
 //ServeHTTP Web request handler
 func (h Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Request handling", zap.String("URL Path", r.URL.Path))
-	isMatch, _ := path.Match("/hello/*", r.URL.Path)
+	isMatch, err := path.Match("/hello/*", r.URL.Path)
+
+	if err != nil {
+		errorMsg := err.Error();
+		h.Logger.Error(errorMsg)
+		http.Error(w, errorMsg, http.StatusInternalServerError)
+		return
+	}
+
 	if !isMatch {
 		http.NotFound(w, r)
 		return

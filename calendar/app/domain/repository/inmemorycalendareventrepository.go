@@ -12,7 +12,7 @@ import (
 
 //InMemoryCalendarEventRepository thread safe in-memory implementation of CalendarEventRepository interface
 type InMemoryCalendarEventRepository struct {
-	mu           *sync.RWMutex
+	mu           sync.RWMutex
 	records      map[uint32]*CalendarEventRecord
 	lastRecordID uint32
 }
@@ -20,9 +20,8 @@ type InMemoryCalendarEventRepository struct {
 //NewInMemoryCalendarEventRepository creates new in-memory CalendarEventRepository
 func NewInMemoryCalendarEventRepository() *InMemoryCalendarEventRepository {
 	return &InMemoryCalendarEventRepository{
-		mu:           &sync.RWMutex{},
+		mu:           sync.RWMutex{},
 		records:      make(map[uint32]*CalendarEventRecord),
-		lastRecordID: 0,
 	}
 }
 

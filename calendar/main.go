@@ -25,32 +25,32 @@ func main() {
 		log.Fatalf("Could not read configuration file: %v", err)
 	}
 
-	config := &config.Configuration{}
-	if json.Unmarshal(configFile, config) != nil {
+	configuration := &config.Configuration{}
+	if json.Unmarshal(configFile, configuration) != nil {
 		log.Fatalf("Could not internalize configuration file data: %v", err)
 	}
 
-	if config.HTTPAddress == "" {
-		config.HTTPAddress = "127.0.0.1:8080"
+	if configuration.HTTPAddress == "" {
+		configuration.HTTPAddress = "127.0.0.1:8080"
 	}
 
-	if config.LogFilePath == "" {
-		config.LogFilePath = "stderr"
+	if configuration.LogFilePath == "" {
+		configuration.LogFilePath = "stderr"
 	}
 
-	if config.LogLevel == "" {
-		config.LogLevel = "debug"
+	if configuration.LogLevel == "" {
+		configuration.LogLevel = "debug"
 	}
 
-	logLelev, err := config.ParseZapLogLevel()
+	logLelev, err := configuration.ParseZapLogLevel()
 	if err != nil {
 		log.Fatalf("Could not internalize zap logger level: %v", err)
 	}
 
 	loggerConfig := zap.NewProductionConfig()
 	loggerConfig.Level = zap.NewAtomicLevelAt(logLelev)
-	loggerConfig.OutputPaths = []string{config.LogFilePath}
-	loggerConfig.ErrorOutputPaths = []string{config.LogFilePath}
+	loggerConfig.OutputPaths = []string{configuration.LogFilePath}
+	loggerConfig.ErrorOutputPaths = []string{configuration.LogFilePath}
 
 	logger, err := loggerConfig.Build()
 	if err != nil {
@@ -58,9 +58,9 @@ func main() {
 	}
 	defer logger.Sync()
 
-	log.Printf("Starting web server on %s\n", config.HTTPAddress)
+	log.Printf("Starting web server on %s\n", configuration.HTTPAddress)
 
-	server := web.NewServer(config.HTTPAddress, logger)
+	server := web.NewServer(configuration.HTTPAddress, logger)
 	err = server.Start()
 	if err != nil {
 		log.Fatalf("Could not start web server: %v", err)
