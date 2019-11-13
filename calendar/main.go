@@ -58,6 +58,8 @@ func main() {
 	}
 	defer logger.Sync()
 
+	log.Printf("Starting web server on %s\n", config.HTTPAddress)
+
 	server := web.NewServer(config.HTTPAddress, logger)
 	err = server.Start()
 	if err != nil {
