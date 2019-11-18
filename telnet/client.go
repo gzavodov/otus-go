@@ -21,7 +21,7 @@ type Client struct {
 	isConnected bool
 }
 
-//NewClient create new telnet client for specified network and address 
+//NewClient create new telnet client for specified network and address
 func NewClient(network string, address string, timeout time.Duration, input io.Reader, output io.Writer) *Client {
 	if network == "" {
 		network = "tcp"
@@ -55,14 +55,14 @@ func (c *Client) Connect(ctx context.Context) error {
 	connection, err := dialer.DialContext(ctx, c.Network, c.Address)
 	if err != nil {
 		cancelFunc()
-		return fmt.Errorf("Could not connect to remote host: %w", err)
+		return fmt.Errorf("could not connect to remote host (%w)", err)
 	}
 
 	c.isConnected = true
 
 	var outputErr error
 	var inputErr error
-	
+
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
@@ -87,8 +87,8 @@ func (c *Client) Connect(ctx context.Context) error {
 
 	if inputErr != nil && outputErr != nil {
 		return fmt.Errorf(
-			"error has occurred while process input (%w); error has occurred while process output (%w)", 
-			inputErr, 
+			"error has occurred while process input (%v); error has occurred while process output (%v)",
+			inputErr,
 			outputErr,
 		)
 	} else if inputErr != nil {
