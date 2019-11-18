@@ -51,7 +51,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	}
 
 	dialer := &net.Dialer{}
-	ctx, cancelFunc := context.WithTimeout(ctx, time.Duration)
+	ctx, cancelFunc := context.WithTimeout(ctx, c.Timeout)
 	connection, err := dialer.DialContext(ctx, c.Network, c.Address)
 	if err != nil {
 		cancelFunc()
@@ -68,14 +68,14 @@ func (c *Client) Connect(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		//Read from net connection and write to output stream
-		outputErr := c.process(ctx, cancelFunc, connection, c.Output)
+		outputErr = c.process(ctx, cancelFunc, connection, c.Output)
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
 		//Read from input stream and write to net connection
-		inputErr := c.process(ctx, cancelFunc, c.Input, connection)
+		inputErr = c.process(ctx, cancelFunc, c.Input, connection)
 		wg.Done()
 	}()
 
