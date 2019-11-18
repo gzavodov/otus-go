@@ -11,28 +11,24 @@ import (
 	"time"
 )
 
-//Client represents teinet client
+//Client represents telnet client
 type Client struct {
 	Network     string
 	Address     string
-	Timeout     int
+	Timeout     time.Duration
 	Input       io.Reader
 	Output      io.Writer
 	isConnected bool
 }
 
 //NewClient create new telnet client for specified network and address 
-func NewClient(network string, address string, timeout int, input io.Reader, output io.Writer) *Client {
+func NewClient(network string, address string, timeout time.Duration, input io.Reader, output io.Writer) *Client {
 	if network == "" {
 		network = "tcp"
 	}
 
 	if address == "" {
 		address = "127.0.0.1:3302"
-	}
-
-	if timeout <= 0 {
-		timeout = 10
 	}
 
 	if input == nil {
@@ -50,36 +46,36 @@ func NewClient(network string, address string, timeout int, input io.Reader, out
 //Transfers text from connection and write to output stream
 //Transfers text from input stream and write to net connection
 func (c *Client) Connect(ctx context.Context) error {
-	var result error
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	dialer := &net.Dialer{}
-	ctx, cancelFunc := context.WithTimeout(ctx, time.Duration(c.Timeout)*time.Second)
-	connection, result := dialer.DialContext(ctx, c.Network, c.Address)
-	if result != nil {
+	ctx, cancelFunc := context.WithTimeout(ctx, time.Duration)
+	connection, err := dialer.DialContext(ctx, c.Network, c.Address)
+	if err != nil {
 		cancelFunc()
-		return fmt.Errorf("Could not connect to remote host: %w", result)
+		return fmt.Errorf("Could not connect to remote host: %w", err)
 	}
 
 	c.isConnected = true
+
+	var outputErr error
+	var inputErr error
+	
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
 	go func() {
 		//Read from net connection and write to output stream
-		err := c.process(ctx, cancelFunc, connection, c.Output)
-		if err != nil {
-			result = fmt.Errorf("Error has occurred while process output: %w", err)
-		}
+		outputErr := c.process(ctx, cancelFunc, connection, c.Output)
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
 		//Read from input stream and write to net connection
-		err := c.process(ctx, cancelFunc, c.Input, connection)
-		if err != nil {
-			result = fmt.Errorf("Error has occurred while process input: %w", err)
-		}
+		inputErr := c.process(ctx, cancelFunc, c.Input, connection)
 		wg.Done()
 	}()
 
@@ -89,8 +85,21 @@ func (c *Client) Connect(ctx context.Context) error {
 	cancelFunc()
 	connection.Close()
 
-	return result
+	if inputErr != nil && outputErr != nil {
+		return fmt.Errorf(
+			"error has occurred while process input (%w); error has occurred while process output (%w)", 
+			inputErr, 
+			outputErr,
+		)
+	} else if inputErr != nil {
+		return fmt.Errorf("error has occurred while process input (%w)", inputErr)
+	} else if outputErr != nil {
+		return fmt.Errorf("error has occurred while process output (%w)", outputErr)
+	}
+
+	return nil
 }
+
 //Process transfers text data from input stream to output stream.
 func (c *Client) process(ctx context.Context, cancelFunc context.CancelFunc, input io.Reader, output io.Writer) error {
 	scanner := bufio.NewScanner(input)
