@@ -5,13 +5,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"sync"
 	"time"
 )
 
+//Client represents teinet client
 type Client struct {
 	Network     string
 	Address     string
@@ -21,6 +21,7 @@ type Client struct {
 	isConnected bool
 }
 
+//NewClient create new telnet client for specified network and address 
 func NewClient(network string, address string, timeout int, input io.Reader, output io.Writer) *Client {
 	if network == "" {
 		network = "tcp"
@@ -45,7 +46,9 @@ func NewClient(network string, address string, timeout int, input io.Reader, out
 	return &Client{Network: network, Address: address, Timeout: timeout, Input: input, Output: output}
 }
 
-//Connect caller
+//Connect establishes connection with remote host using the provided context.
+//Transfers text from connection and write to output stream
+//Transfers text from input stream and write to net connection
 func (c *Client) Connect(ctx context.Context) error {
 	var result error
 
@@ -63,7 +66,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		//Read from net connection and write to output stream
-		err := c.Process(ctx, cancelFunc, connection, c.Output)
+		err := c.process(ctx, cancelFunc, connection, c.Output)
 		if err != nil {
 			result = fmt.Errorf("Error has occurred while process output: %w", err)
 		}
@@ -73,7 +76,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		//Read from input stream and write to net connection
-		err := c.Process(ctx, cancelFunc, c.Input, connection)
+		err := c.process(ctx, cancelFunc, c.Input, connection)
 		if err != nil {
 			result = fmt.Errorf("Error has occurred while process input: %w", err)
 		}
@@ -88,8 +91,8 @@ func (c *Client) Connect(ctx context.Context) error {
 
 	return result
 }
-
-func (c *Client) Process(ctx context.Context, cancelFunc context.CancelFunc, input io.Reader, output io.Writer) error {
+//Process transfers text data from input stream to output stream.
+func (c *Client) process(ctx context.Context, cancelFunc context.CancelFunc, input io.Reader, output io.Writer) error {
 	scanner := bufio.NewScanner(input)
 
 	messageChan := make(chan string)
@@ -117,6 +120,7 @@ loop:
 	return err
 }
 
+//Scan read message to message channel.
 func (c *Client) scan(scanner *bufio.Scanner, messageChan chan<- string, errorChan chan<- error) {
 	ok := scanner.Scan()
 	if c.isConnected {
