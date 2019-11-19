@@ -18,6 +18,8 @@ type Client struct {
 	Timeout     time.Duration
 	Input       io.Reader
 	Output      io.Writer
+	mu          sync.RWMutex
+	connection  net.Conn
 	isConnected bool
 }
 
@@ -28,7 +30,7 @@ func NewClient(network string, address string, timeout time.Duration, input io.R
 	}
 
 	if address == "" {
-		address = "127.0.0.1:3302"
+		address = "127.0.0.1:23"
 	}
 
 	if input == nil {
@@ -39,7 +41,26 @@ func NewClient(network string, address string, timeout time.Duration, input io.R
 		output = os.Stdout
 	}
 
-	return &Client{Network: network, Address: address, Timeout: timeout, Input: input, Output: output}
+	return &Client{
+		Network: network,
+		Address: address,
+		Timeout: timeout,
+		Input:   input,
+		Output:  output,
+		mu:      sync.RWMutex{},
+	}
+}
+
+func (c *Client) IsConnected() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.isConnected
+}
+
+func (c *Client) setIsConnected(flag bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.isConnected = flag
 }
 
 //Connect establishes connection with remote host using the provided context.
@@ -50,15 +71,16 @@ func (c *Client) Connect(ctx context.Context) error {
 		ctx = context.Background()
 	}
 
-	dialer := &net.Dialer{}
 	ctx, cancelFunc := context.WithTimeout(ctx, c.Timeout)
+	defer cancelFunc()
+
+	dialer := net.Dialer{}
 	connection, err := dialer.DialContext(ctx, c.Network, c.Address)
 	if err != nil {
-		cancelFunc()
 		return fmt.Errorf("could not connect to remote host (%w)", err)
 	}
 
-	c.isConnected = true
+	c.setIsConnected(true)
 
 	var outputErr error
 	var inputErr error
@@ -68,21 +90,20 @@ func (c *Client) Connect(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		//Read from net connection and write to output stream
-		outputErr = c.process(ctx, cancelFunc, connection, c.Output)
+		outputErr = c.Scan(ctx, cancelFunc, connection, c.Output)
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
 		//Read from input stream and write to net connection
-		inputErr = c.process(ctx, cancelFunc, c.Input, connection)
+		inputErr = c.Scan(ctx, cancelFunc, c.Input, connection)
 		wg.Done()
 	}()
 
 	wg.Wait()
-	c.isConnected = false
+	c.setIsConnected(false)
 
-	cancelFunc()
 	connection.Close()
 
 	if inputErr != nil && outputErr != nil {
@@ -100,8 +121,8 @@ func (c *Client) Connect(ctx context.Context) error {
 	return nil
 }
 
-//Process transfers text data from input stream to output stream.
-func (c *Client) process(ctx context.Context, cancelFunc context.CancelFunc, input io.Reader, output io.Writer) error {
+//Scan read text data from input stream and write to output stream.
+func (c *Client) Scan(ctx context.Context, cancelFunc context.CancelFunc, input io.Reader, output io.Writer) error {
 	scanner := bufio.NewScanner(input)
 
 	messageChan := make(chan string)
@@ -110,15 +131,26 @@ func (c *Client) process(ctx context.Context, cancelFunc context.CancelFunc, inp
 	defer close(messageChan)
 	defer close(errorChan)
 
+	var msg string
 	var err error
+
 loop:
 	for {
-		go c.scan(scanner, messageChan, errorChan)
+		go func(client *Client, scanner *bufio.Scanner, messageChan chan<- string, errorChan chan<- error) {
+			ok := scanner.Scan()
+			if client.IsConnected() {
+				if ok {
+					messageChan <- scanner.Text()
+				} else {
+					errorChan <- scanner.Err()
+				}
+			}
+		}(c, scanner, messageChan, errorChan)
 
 		select {
 		case <-ctx.Done():
 			break loop
-		case msg := <-messageChan:
+		case msg = <-messageChan:
 			output.Write([]byte(fmt.Sprintf("%s\n", msg)))
 		case err = <-errorChan:
 			cancelFunc()
@@ -127,16 +159,4 @@ loop:
 	}
 
 	return err
-}
-
-//Scan read message to message channel.
-func (c *Client) scan(scanner *bufio.Scanner, messageChan chan<- string, errorChan chan<- error) {
-	ok := scanner.Scan()
-	if c.isConnected {
-		if ok {
-			messageChan <- scanner.Text()
-		} else {
-			errorChan <- scanner.Err()
-		}
-	}
 }

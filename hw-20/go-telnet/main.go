@@ -4,11 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/gzavodov/otus-go/telnet"
 	"log"
 	"net"
 	"os"
 	"time"
+
+	"github.com/gzavodov/otus-go/telnet"
 )
 
 func main() {
