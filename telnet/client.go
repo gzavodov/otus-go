@@ -13,14 +13,13 @@ import (
 
 //Client represents telnet client
 type Client struct {
-	Network     string
-	Address     string
-	Timeout     time.Duration
-	Input       io.Reader
-	Output      io.Writer
-	mu          sync.RWMutex
-	connection  net.Conn
-	isConnected bool
+	Network   string
+	Address   string
+	Timeout   time.Duration
+	Input     io.Reader
+	Output    io.Writer
+	mu        sync.RWMutex
+	connected bool
 }
 
 //NewClient create new telnet client for specified network and address
@@ -51,16 +50,16 @@ func NewClient(network string, address string, timeout time.Duration, input io.R
 	}
 }
 
-func (c *Client) IsConnected() bool {
+func (c *Client) isConnected() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.isConnected
+	return c.connected
 }
 
 func (c *Client) setIsConnected(flag bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.isConnected = flag
+	c.connected = flag
 }
 
 //Connect establishes connection with remote host using the provided context.
@@ -103,7 +102,6 @@ func (c *Client) Connect(ctx context.Context) error {
 
 	wg.Wait()
 	c.setIsConnected(false)
-
 	connection.Close()
 
 	if inputErr != nil && outputErr != nil {
@@ -125,38 +123,41 @@ func (c *Client) Connect(ctx context.Context) error {
 func (c *Client) Scan(ctx context.Context, cancelFunc context.CancelFunc, input io.Reader, output io.Writer) error {
 	scanner := bufio.NewScanner(input)
 
-	messageChan := make(chan string)
-	errorChan := make(chan error)
-
+	messageChan := make(chan ClientMessage)
 	defer close(messageChan)
-	defer close(errorChan)
 
-	var msg string
 	var err error
-
 loop:
 	for {
-		go func(client *Client, scanner *bufio.Scanner, messageChan chan<- string, errorChan chan<- error) {
+		go func(client *Client, scanner *bufio.Scanner, messageChan chan<- ClientMessage) {
 			ok := scanner.Scan()
-			if client.IsConnected() {
+			if client.isConnected() {
 				if ok {
-					messageChan <- scanner.Text()
+					messageChan <- ClientMessage{Text: scanner.Text()}
 				} else {
-					errorChan <- scanner.Err()
+					messageChan <- ClientMessage{Err: scanner.Err()}
 				}
 			}
-		}(c, scanner, messageChan, errorChan)
+		}(c, scanner, messageChan)
 
 		select {
 		case <-ctx.Done():
 			break loop
-		case msg = <-messageChan:
-			output.Write([]byte(fmt.Sprintf("%s\n", msg)))
-		case err = <-errorChan:
-			cancelFunc()
-			break loop
+		case msg := <-messageChan:
+			if msg.Err == nil {
+				output.Write([]byte(fmt.Sprintf("%s\n", msg.Text)))
+			} else {
+				err = msg.Err
+				cancelFunc()
+				break loop
+			}
 		}
 	}
-
 	return err
+}
+
+//ClientMessage represents telnet client message
+type ClientMessage struct {
+	Text string
+	Err  error
 }
