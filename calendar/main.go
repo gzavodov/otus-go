@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
+	"github.com/gzavodov/otus-go/calendar/app/domain/repository"
 	"github.com/gzavodov/otus-go/calendar/app/web"
 	"github.com/gzavodov/otus-go/calendar/config"
 	"go.uber.org/zap"
@@ -60,7 +61,11 @@ func main() {
 
 	log.Printf("Starting web server on %s\n", configuration.HTTPAddress)
 
-	server := web.NewServer(configuration.HTTPAddress, logger)
+	repo, err := repository.CreateEventRepository(configuration.EventRepositoryTypeID)
+	if err != nil {
+		log.Fatalf("Could not create event repository: %v", err)
+	}
+	server := web.NewServer(configuration.HTTPAddress, repo, logger)
 	err = server.Start()
 	if err != nil {
 		log.Fatalf("Could not start web server: %v", err)

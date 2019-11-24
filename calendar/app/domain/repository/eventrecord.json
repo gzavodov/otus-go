@@ -1,0 +1,12 @@
+{
+	"id":			500,
+	"title":		"Foo",
+	"description":	"Bar",
+	"location":		"Baz",
+	"startTime":	"2019-10-01T12:00:00.0Z",
+	"endTime":		"2019-10-01T13:00:00.0Z",
+	"userId":		10,
+	"calendarId":	50,
+	"created":		"2019-10-01T12:00:00.0Z",
+	"lastUpdated":	"2019-10-01T12:00:00.0Z"
+}

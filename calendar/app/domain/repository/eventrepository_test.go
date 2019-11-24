@@ -18,22 +18,24 @@ func CouldNotRemoveObjectError() error {
 	return errors.New("could not remove object from repository")
 }
 
-func ObjectNotMatchedError(expected, received *model.CalendarEvent) error {
+func ObjectNotMatchedError(expected, received *model.Event) error {
 	return fmt.Errorf("object before saving in repository is not equal to object after reading from repository; expected: %v, received: %v", *expected, *received)
 }
 
-func ObjectListNotMatchedError(expected, received []*model.CalendarEvent) error {
+func ObjectListNotMatchedError(expected, received []*model.Event) error {
 	return fmt.Errorf("quantity of objects before saving in repository is not equal to quantity of objects after reading from repository; expected: %d, received: %d", len(expected), len(received))
 }
 
 func TestInMemoryRepository(t *testing.T) {
-	repo := NewInMemoryCalendarEventRepository()
+	repo := NewInMemoryEventRepository()
 
-	t.Run("CalendarEventRepository::Create",
+	t.Run("EventRepository::Create",
 		func(t *testing.T) {
-			source := &model.CalendarEvent{
-				Title: "Test Event #1 (2019-10-01T12:00:00)",
-				Time:  time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+			source := &model.Event{
+				Title:     "Test Event #1 (2019-10-01T12:00:00)",
+				UserID:    1,
+				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
 			}
 			err := repo.Create(source)
 			if err != nil {
@@ -47,11 +49,13 @@ func TestInMemoryRepository(t *testing.T) {
 			repo.Purge()
 		})
 
-	t.Run("CalendarEventRepository::Read",
+	t.Run("EventRepository::Read",
 		func(t *testing.T) {
-			source := &model.CalendarEvent{
-				Title: "Test Event #2 (2019-10-02T12:00:00)",
-				Time:  time.Date(2019, 10, 2, 12, 0, 0, 0, time.UTC),
+			source := &model.Event{
+				Title:     "Test Event #2 (2019-10-02T12:00:00)",
+				UserID:    1,
+				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
 			}
 
 			err := repo.Create(source)
@@ -71,11 +75,13 @@ func TestInMemoryRepository(t *testing.T) {
 			repo.Purge()
 		})
 
-	t.Run("CalendarEventRepository::Update",
+	t.Run("EventRepository::Update",
 		func(t *testing.T) {
-			source := &model.CalendarEvent{
-				Title: "Test Event #3 (2019-10-03T12:00:00)",
-				Time:  time.Date(2019, 10, 3, 12, 0, 0, 0, time.UTC),
+			source := &model.Event{
+				Title:     "Test Event #3 (2019-10-03T12:00:00)",
+				UserID:    1,
+				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
 			}
 
 			err := repo.Create(source)
@@ -101,11 +107,13 @@ func TestInMemoryRepository(t *testing.T) {
 			repo.Purge()
 		})
 
-	t.Run("CalendarEventRepository::Delete",
+	t.Run("EventRepository::Delete",
 		func(t *testing.T) {
-			source := &model.CalendarEvent{
-				Title: "Test Event #4 (2019-10-04T12:00:00)",
-				Time:  time.Date(2019, 10, 4, 12, 0, 0, 0, time.UTC),
+			source := &model.Event{
+				Title:     "Test Event #4 (2019-10-04T12:00:00)",
+				UserID:    1,
+				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
 			}
 			err := repo.Create(source)
 			if err != nil {
@@ -124,20 +132,26 @@ func TestInMemoryRepository(t *testing.T) {
 			repo.Purge()
 		})
 
-	t.Run("CalendarEventRepository::ReadAll",
+	t.Run("EventRepository::ReadAll",
 		func(t *testing.T) {
-			sources := []*model.CalendarEvent{
+			sources := []*model.Event{
 				{
-					Title: "Test Event #1 (2019-10-01T12:00:00)",
-					Time:  time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+					Title:     "Test Event #1 (2019-10-01T12:00:00)",
+					UserID:    1,
+					StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
 				},
 				{
-					Title: "Test Event #2 (2019-10-02T12:00:00)",
-					Time:  time.Date(2019, 10, 2, 12, 0, 0, 0, time.UTC),
+					Title:     "Test Event #2 (2019-10-02T13:00:00)",
+					UserID:    1,
+					StartTime: time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
 				},
 				{
-					Title: "Test Event #3 (2019-10-03T12:00:00)",
-					Time:  time.Date(2019, 10, 3, 12, 0, 0, 0, time.UTC),
+					Title:     "Test Event #3 (2019-10-03T14:00:00)",
+					UserID:    1,
+					StartTime: time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2019, 10, 1, 15, 0, 0, 0, time.UTC),
 				},
 			}
 

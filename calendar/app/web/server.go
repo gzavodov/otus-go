@@ -1,22 +1,22 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
-	"path"
 
+	"github.com/gzavodov/otus-go/calendar/app/domain/repository"
 	"go.uber.org/zap"
 )
 
 //NewServer Creates new web server
-func NewServer(address string, logger *zap.Logger) *Server {
-	server := &Server{Address: address, Logger: logger}
+func NewServer(address string, repo repository.EventRepository, logger *zap.Logger) *Server {
+	server := &Server{Address: address, Repo: repo, Logger: logger}
 	return server
 }
 
-//Server Simple Web Server
+//Server Simple Web Server for calendar event API
 type Server struct {
 	Address    string
+	Repo       repository.EventRepository
 	Logger     *zap.Logger
 	HTTPServer *http.ServeMux
 }
@@ -24,25 +24,13 @@ type Server struct {
 //Start Start handling of web requests
 func (h *Server) Start() error {
 	h.HTTPServer = http.NewServeMux()
-	h.HTTPServer.Handle("/", h)
+
+	h.HTTPServer.Handle("/create_event", NewCreateEventHandler(h.Repo, h.Logger))
+	h.HTTPServer.Handle("/update_event", NewUpdateEventHandler(h.Repo, h.Logger))
+	h.HTTPServer.Handle("/delete_event", NewDeleteEventHandler(h.Repo, h.Logger))
+	h.HTTPServer.Handle("/events_for_day", NewEventsForDayHandler(h.Repo, h.Logger))
+	h.HTTPServer.Handle("/events_for_week", NewEventsForWeekHandler(h.Repo, h.Logger))
+	h.HTTPServer.Handle("/events_for_month", NewEventsForMonthHandler(h.Repo, h.Logger))
+
 	return http.ListenAndServe(h.Address, h.HTTPServer)
-}
-
-//ServeHTTP Web request handler
-func (h Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Logger.Info("Request handling", zap.String("URL Path", r.URL.Path))
-	isMatch, err := path.Match("/hello/*", r.URL.Path)
-
-	if err != nil {
-		errorMsg := err.Error();
-		h.Logger.Error(errorMsg)
-		http.Error(w, errorMsg, http.StatusInternalServerError)
-		return
-	}
-
-	if !isMatch {
-		http.NotFound(w, r)
-		return
-	}
-	fmt.Fprintf(w, "Welcome to the home page!")
 }

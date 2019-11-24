@@ -2,12 +2,14 @@ package model
 
 import "time"
 
-//CalendarEvent Calendar Event Model
-type CalendarEvent struct {
+//Event Calendar Event Model
+type Event struct {
 	ID          uint32    `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Location    string    `json:"location"`
-	Time        time.Time `json:"time"`
+	StartTime   time.Time `json:"startTime"`
+	EndTime     time.Time `json:"endTime"`
+	UserID      uint32    `json:"userId"`
 	CalendarID  uint32    `json:"calendarId"`
 }
