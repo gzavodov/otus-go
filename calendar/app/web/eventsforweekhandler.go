@@ -30,7 +30,7 @@ func (h EventsForWeekHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	query := RequestQuery{Request: r}
 	date, err := query.ParseDate("date", time.Now())
 	if err != nil {
-		h.LogError("EventHandler::ParseDateQueryParam", err)
+		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -47,14 +47,14 @@ func (h EventsForWeekHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	userID, err := query.ParseUint32("userId", 0)
 	if err != nil {
-		h.LogError("EventHandler::ParseUint32", err)
+		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	list, err := h.Repo.ReadList(userID, from, to)
 	if err != nil {
-		h.LogError("EventRepository::ReadList", err)
+		h.LogError("Repository", err)
 		if err = h.WriteEventResult(w, EventError{Error: err.Error()}); err != nil {
 			h.LogError("Response Writing", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
