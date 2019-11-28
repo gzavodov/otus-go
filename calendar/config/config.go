@@ -10,6 +10,7 @@ type Configuration struct {
 	LogFilePath           string `json:"log_file"`
 	LogLevel              string `json:"log_level"`
 	EventRepositoryTypeID int    `json:"event_repository_type_id"`
+	EndpointServiceTypeID int    `json:"endpoint_service_type_id"`
 }
 
 //ParseZapLogLevel Parse Zap LogLevel from strig

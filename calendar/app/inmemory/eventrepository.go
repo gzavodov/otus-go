@@ -1,45 +1,39 @@
-package repository
+package inmemory
 
 import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/gzavodov/otus-go/calendar/app/domain/model"
+	"github.com/gzavodov/otus-go/calendar/app/domain/repository"
 )
 
-//InMemoryEventRepository thread safe in-memory implementation of EventRepository interface
-type InMemoryEventRepository struct {
+//EventRepository thread safe in-memory implementation of EventRepository interface
+type EventRepository struct {
 	mu           sync.RWMutex
-	records      map[uint32]*EventRecord
+	records      map[uint32]*repository.EventRecord
 	lastRecordID uint32
 }
 
-//NewInMemoryEventRepository creates new in-memory EventRepository
-func NewInMemoryEventRepository() *InMemoryEventRepository {
-	return &InMemoryEventRepository{
+//NewEventRepository creates new in-memory EventRepository
+func NewEventRepository() *EventRepository {
+	return &EventRepository{
 		mu:      sync.RWMutex{},
-		records: make(map[uint32]*EventRecord),
+		records: make(map[uint32]*repository.EventRecord),
 	}
 }
 
 //Create add Calendar Event in repository
 //If succseed ID field updated
-func (r *InMemoryEventRepository) Create(m *model.Event) error {
+func (r *EventRepository) Create(m *model.Event) error {
 	if m == nil {
-		return errors.New("parameter 'm' must be not null pointer")
+		return errors.New("first parameter must be not null pointer to event")
 	}
 
-	validator := model.EventValidator{Event: m}
-	errorMessages := validator.Validate().GetMessages()
-	if len(errorMessages) > 0 {
-		return errors.New(strings.Join(errorMessages, "\n"))
-	}
-
-	record := NewCalendarEventRecord(m)
+	record := repository.NewCalendarEventRecord(m)
 	record.Created = time.Now()
 	record.LastUpdated = record.Created
 
@@ -56,9 +50,9 @@ func (r *InMemoryEventRepository) Create(m *model.Event) error {
 }
 
 //Read get Calendar Event from repository by ID
-func (r *InMemoryEventRepository) Read(ID uint32) (*model.Event, error) {
+func (r *EventRepository) Read(ID uint32) (*model.Event, error) {
 	if ID <= 0 {
-		return nil, fmt.Errorf("parameter 'ID' is invalid: %d", ID)
+		return nil, repository.NewError(repository.ErrorInvalidArgument, fmt.Sprintf("parameter 'ID' is invalid: %d", ID))
 	}
 
 	r.mu.RLock()
@@ -66,20 +60,20 @@ func (r *InMemoryEventRepository) Read(ID uint32) (*model.Event, error) {
 
 	record, isFound := r.records[ID]
 	if !isFound {
-		return nil, fmt.Errorf("could not find record with ID: %d", ID)
+		return nil, repository.NewError(repository.ErrorNotFound, fmt.Sprintf("could not find record with ID: %d", ID))
 	}
 
-	return NewCalendarEventModel(record), nil
+	return repository.NewCalendarEventModel(record), nil
 }
 
 //ReadAll get all Calendar Events from repository
-func (r *InMemoryEventRepository) ReadAll() []*model.Event {
+func (r *EventRepository) ReadAll() []*model.Event {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	list := make([]*model.Event, 0, len(r.records))
 	for _, record := range r.records {
-		list = append(list, NewCalendarEventModel(record))
+		list = append(list, repository.NewCalendarEventModel(record))
 	}
 
 	sort.SliceStable(
@@ -91,14 +85,14 @@ func (r *InMemoryEventRepository) ReadAll() []*model.Event {
 }
 
 //ReadList get Calendar Events by interval specified by from and to params
-func (r *InMemoryEventRepository) ReadList(userID uint32, from time.Time, to time.Time) ([]*model.Event, error) {
+func (r *EventRepository) ReadList(userID uint32, from time.Time, to time.Time) ([]*model.Event, error) {
 	list := make([]*model.Event, 0, len(r.records))
 	for _, record := range r.records {
 		if userID > 0 && record.UserID != userID {
 			continue
 		}
 		if (record.StartTime.Equal(from) || record.StartTime.After(from)) && (record.EndTime.Equal(to) || record.EndTime.Before(to)) {
-			list = append(list, NewCalendarEventModel(record))
+			list = append(list, repository.NewCalendarEventModel(record))
 		}
 	}
 
@@ -111,7 +105,7 @@ func (r *InMemoryEventRepository) ReadList(userID uint32, from time.Time, to tim
 }
 
 //IsExists check if repository contains Calendar event with specified ID
-func (r *InMemoryEventRepository) IsExists(ID uint32) bool {
+func (r *EventRepository) IsExists(ID uint32) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -120,20 +114,14 @@ func (r *InMemoryEventRepository) IsExists(ID uint32) bool {
 }
 
 //Update modifies Calendar Event in repository
-func (r *InMemoryEventRepository) Update(m *model.Event) error {
+func (r *EventRepository) Update(m *model.Event) error {
 	if m == nil {
-		return errors.New("parameter 'm' must be not null pointer")
+		return repository.NewError(repository.ErrorInvalidArgument, "first parameter must be not null pointer to event")
 	}
 
 	ID := m.ID
 	if ID <= 0 {
-		return fmt.Errorf("model ID is invalid: %d", ID)
-	}
-
-	validator := model.EventValidator{Event: m}
-	validationMessages := validator.Validate().GetMessages()
-	if len(validationMessages) > 0 {
-		return errors.New(strings.Join(validationMessages, "\n"))
+		return repository.NewError(repository.ErrorInvalidArgument, fmt.Sprintf("model ID is invalid: %d", ID))
 	}
 
 	r.mu.Lock()
@@ -141,7 +129,7 @@ func (r *InMemoryEventRepository) Update(m *model.Event) error {
 
 	record, isFound := r.records[ID]
 	if !isFound {
-		return fmt.Errorf("could not find record with ID: %d", ID)
+		return repository.NewError(repository.ErrorNotFound, fmt.Sprintf("could not find record with ID: %d", ID))
 	}
 
 	record.CopyFromModel(m)
@@ -151,16 +139,16 @@ func (r *InMemoryEventRepository) Update(m *model.Event) error {
 }
 
 //Delete removes Calendar Event from repository by ID
-func (r *InMemoryEventRepository) Delete(ID uint32) error {
+func (r *EventRepository) Delete(ID uint32) error {
 	if ID <= 0 {
-		return fmt.Errorf("parameter 'ID' is invalid: %d", ID)
+		return repository.NewError(repository.ErrorInvalidArgument, fmt.Sprintf("parameter 'ID' is invalid: %d", ID))
 	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if _, isFound := r.records[ID]; !isFound {
-		return fmt.Errorf("could not find record with ID: %d", ID)
+		return repository.NewError(repository.ErrorNotFound, fmt.Sprintf("could not find record with ID: %d", ID))
 	}
 
 	delete(r.records, ID)
@@ -169,7 +157,7 @@ func (r *InMemoryEventRepository) Delete(ID uint32) error {
 }
 
 //GetTotalCount returns overall amouunt of calendar events in repository
-func (r *InMemoryEventRepository) GetTotalCount() int {
+func (r *EventRepository) GetTotalCount() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -177,11 +165,11 @@ func (r *InMemoryEventRepository) GetTotalCount() int {
 }
 
 //Purge removes all Calendar records from repository
-func (r *InMemoryEventRepository) Purge() error {
+func (r *EventRepository) Purge() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.records = make(map[uint32]*EventRecord)
+	r.records = make(map[uint32]*repository.EventRecord)
 	r.lastRecordID = 0
 
 	return nil

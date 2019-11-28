@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package calendar;
+option go_package = "rpc";
+import "google/protobuf/timestamp.proto";
+
+service EventService {
+    rpc Create (Event) returns (Event);
+    rpc Read(EventIdentifier) returns (Event);
+    rpc Update(Event) returns (Event);
+    rpc Delete(EventIdentifier) returns(EventIdentifier);
+    rpc ReadList(EventListQuery) returns(EventListReply);
+}
+
+message EventIdentifier {
+    uint32 Value = 1;
+}
+
+message EventListQuery {
+    uint32                      UserID = 1;
+    google.protobuf.Timestamp   From   = 2;
+    google.protobuf.Timestamp   To     = 3;
+}
+
+message EventListReply {
+    repeated Event Items = 1;
+}
+
+message Event {
+    uint32                      ID          = 1;
+    string                      Title       = 2;
+    string                      Description = 3;
+    string                      Location    = 4;
+    google.protobuf.Timestamp   StartTime   = 5;
+    google.protobuf.Timestamp   EndTime     = 6;
+    uint32                      UserID      = 7;
+    uint32                      CalendarID  = 8;
+}
+

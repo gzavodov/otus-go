@@ -1,4 +1,4 @@
-package repository
+package inmemory
 
 import (
 	"errors"
@@ -27,7 +27,7 @@ func ObjectListNotMatchedError(expected, received []*model.Event) error {
 }
 
 func TestInMemoryRepository(t *testing.T) {
-	repo := NewInMemoryEventRepository()
+	repo := NewEventRepository()
 
 	t.Run("EventRepository::Create",
 		func(t *testing.T) {

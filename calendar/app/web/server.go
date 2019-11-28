@@ -1,36 +1,64 @@
 package web
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gzavodov/otus-go/calendar/app/domain/repository"
+	"github.com/gzavodov/otus-go/calendar/app/endpoint"
 	"go.uber.org/zap"
 )
 
-//NewServer Creates new web server
+//NewServer Creates new Web server
 func NewServer(address string, repo repository.EventRepository, logger *zap.Logger) *Server {
-	server := &Server{Address: address, Repo: repo, Logger: logger}
-	return server
+	return &Server{
+		Server: endpoint.Server{Name: "Web", Address: address, Repo: repo, Logger: logger},
+	}
 }
 
 //Server Simple Web Server for calendar event API
 type Server struct {
-	Address    string
-	Repo       repository.EventRepository
-	Logger     *zap.Logger
-	HTTPServer *http.ServeMux
+	HTTPServer   *http.Server
+	EventHandler *EventHandler
+
+	endpoint.Server
 }
 
-//Start Start handling of web requests
-func (h *Server) Start() error {
-	h.HTTPServer = http.NewServeMux()
+//Start Start handling of Web requests
+func (s *Server) Start() error {
+	s.EventHandler = &EventHandler{
+		Handler: endpoint.Handler{
+			Name:        "Main",
+			ServiceName: s.Name,
+			Repo:        s.Repo,
+			Logger:      s.Logger,
+		},
+	}
 
-	h.HTTPServer.Handle("/create_event", NewCreateEventHandler(h.Repo, h.Logger))
-	h.HTTPServer.Handle("/update_event", NewUpdateEventHandler(h.Repo, h.Logger))
-	h.HTTPServer.Handle("/delete_event", NewDeleteEventHandler(h.Repo, h.Logger))
-	h.HTTPServer.Handle("/events_for_day", NewEventsForDayHandler(h.Repo, h.Logger))
-	h.HTTPServer.Handle("/events_for_week", NewEventsForWeekHandler(h.Repo, h.Logger))
-	h.HTTPServer.Handle("/events_for_month", NewEventsForMonthHandler(h.Repo, h.Logger))
+	serverMux := http.NewServeMux()
 
-	return http.ListenAndServe(h.Address, h.HTTPServer)
+	serverMux.HandleFunc("/create_event", s.EventHandler.Create)
+	serverMux.HandleFunc("/update_event", s.EventHandler.Update)
+	serverMux.HandleFunc("/delete_event", s.EventHandler.Delete)
+	serverMux.HandleFunc("/events_for_day", s.EventHandler.EventsForDay)
+	serverMux.HandleFunc("/events_for_week", s.EventHandler.EventsForWeek)
+	serverMux.HandleFunc("/events_for_month", s.EventHandler.EventsForMonth)
+
+	s.HTTPServer = &http.Server{Addr: s.Address, Handler: serverMux}
+
+	s.SetIsStarted(true)
+	defer s.SetIsStarted(false)
+
+	err := s.HTTPServer.ListenAndServe()
+	if err == nil || err == http.ErrServerClosed {
+		return nil
+	}
+	return err
+}
+
+//Stop stop handling of Web requests
+func (s *Server) Stop() {
+	if s.HTTPServer != nil {
+		s.HTTPServer.Shutdown(context.Background())
+	}
 }

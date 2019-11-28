@@ -6,10 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/gzavodov/otus-go/calendar/app/domain/repository"
-	"github.com/gzavodov/otus-go/calendar/app/web"
+	"github.com/gzavodov/otus-go/calendar/app/factory"
+	"github.com/gzavodov/otus-go/calendar/app/logger"
 	"github.com/gzavodov/otus-go/calendar/config"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	if *configFilePath == "" {
-		*configFilePath = "./config/config.development.json"
+		*configFilePath = "./config/config.development.rpc.json"
 	}
 
 	configFile, err := ioutil.ReadFile(*configFilePath)
@@ -32,7 +31,7 @@ func main() {
 	}
 
 	if configuration.HTTPAddress == "" {
-		configuration.HTTPAddress = "127.0.0.1:8080"
+		configuration.HTTPAddress = "127.0.0.1:9090"
 	}
 
 	if configuration.LogFilePath == "" {
@@ -43,31 +42,31 @@ func main() {
 		configuration.LogLevel = "debug"
 	}
 
-	logLelev, err := configuration.ParseZapLogLevel()
-	if err != nil {
-		log.Fatalf("Could not internalize zap logger level: %v", err)
-	}
-
-	loggerConfig := zap.NewProductionConfig()
-	loggerConfig.Level = zap.NewAtomicLevelAt(logLelev)
-	loggerConfig.OutputPaths = []string{configuration.LogFilePath}
-	loggerConfig.ErrorOutputPaths = []string{configuration.LogFilePath}
-
-	logger, err := loggerConfig.Build()
+	appLogger, err := logger.Create(configuration.LogFilePath, configuration.LogLevel)
 	if err != nil {
 		log.Fatalf("Could not initialize zap logger: %v", err)
 	}
-	defer logger.Sync()
+	defer appLogger.Sync()
 
-	log.Printf("Starting web server on %s\n", configuration.HTTPAddress)
-
-	repo, err := repository.CreateEventRepository(configuration.EventRepositoryTypeID)
+	appRepo, err := factory.CreateEventRepository(configuration.EventRepositoryTypeID)
 	if err != nil {
 		log.Fatalf("Could not create event repository: %v", err)
 	}
-	server := web.NewServer(configuration.HTTPAddress, repo, logger)
-	err = server.Start()
+
+	service, err := factory.CreateEndpointService(
+		configuration.EndpointServiceTypeID,
+		configuration.HTTPAddress,
+		appRepo,
+		appLogger,
+	)
 	if err != nil {
-		log.Fatalf("Could not start web server: %v", err)
+		log.Fatalf("Could not create endpoint service: %v", err)
+	}
+
+	log.Printf("Starting %s service on %s...\n", service.GetServiceName(), configuration.HTTPAddress)
+
+	err = service.Start()
+	if err != nil {
+		log.Fatalf("Could not start endpoint service: %v", err)
 	}
 }

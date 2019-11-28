@@ -22,6 +22,14 @@ func (v *EventValidationResult) GetMessages() []string {
 	return v.messages
 }
 
+//GetError return validation error
+func (v *EventValidationResult) Error() error {
+	if len(v.messages) > 0 {
+		return NewValidationError(v.messages)
+	}
+	return nil
+}
+
 //EventValidator calendar event standard validator
 type EventValidator struct {
 	Event *Event
