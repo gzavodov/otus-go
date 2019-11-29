@@ -11,20 +11,9 @@ type Server struct {
 	Address   string
 	Repo      repository.EventRepository
 	Logger    *zap.Logger
-	isStarted bool
 }
 
 //GetServiceName returns service name
 func (s *Server) GetServiceName() string {
 	return s.Name
-}
-
-//SetIsStarted set server IsStarted flag
-func (s *Server) SetIsStarted(isStarted bool) {
-	s.isStarted = isStarted
-}
-
-//IsStarted check if service started
-func (s *Server) IsStarted() bool {
-	return s.isStarted
 }

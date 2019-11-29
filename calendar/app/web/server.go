@@ -46,9 +46,6 @@ func (s *Server) Start() error {
 
 	s.HTTPServer = &http.Server{Addr: s.Address, Handler: serverMux}
 
-	s.SetIsStarted(true)
-	defer s.SetIsStarted(false)
-
 	err := s.HTTPServer.ListenAndServe()
 	if err == nil || err == http.ErrServerClosed {
 		return nil

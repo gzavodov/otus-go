@@ -43,9 +43,6 @@ func (s *Server) Start() error {
 	s.GRPCServer = grpc.NewServer()
 	RegisterEventServiceServer(s.GRPCServer, s.EventHandler)
 
-	s.SetIsStarted(true)
-	defer s.SetIsStarted(false)
-
 	return s.GRPCServer.Serve(listener)
 }
 

@@ -24,11 +24,12 @@ func (r *EventResponseBase) CreateEventProxy(eventModel *model.Event) (*Event, e
 		return &Event{}, nil
 	}
 
-	eventProxy := &Event{}
-	eventProxy.ID = eventModel.ID
-	eventProxy.Title = eventModel.Title
-	eventProxy.Description = eventModel.Description
-	eventProxy.Location = eventModel.Location
+	eventProxy := &Event{
+		ID:          eventModel.ID,
+		Title:       eventModel.Title,
+		Description: eventModel.Description,
+		Location:    eventModel.Location,
+	}
 
 	startTime, err := ptypes.TimestampProto(eventModel.StartTime)
 	if err != nil {
@@ -58,12 +59,12 @@ func (r *EventResponseBase) PrepareReplyError(err error) error {
 	if _, ok := err.(*model.ValidationError); ok {
 		code = codes.FailedPrecondition
 	} else if repositoryErr, ok := err.(*repository.Error); ok {
-		errCode := repositoryErr.GetCode()
-		if errCode == repository.ErrorNotFound {
+		switch repositoryErr.GetCode() {
+		case repository.ErrorNotFound:
 			code = codes.NotFound
-		} else if errCode == repository.ErrorInvalidArgument {
+		case repository.ErrorInvalidArgument:
 			code = codes.InvalidArgument
-		} else if errCode == repository.ErrorInvalidObject {
+		case repository.ErrorInvalidObject:
 			code = codes.FailedPrecondition
 		}
 	}
@@ -94,7 +95,7 @@ func (r *EventResponse) LogAndReply(model *model.Event, errorName string, err er
 	if model != nil {
 		outgoingProxy, err = r.CreateEventProxy(model)
 		if err != nil {
-			r.LogError("Externalization", err)
+			r.LogError(ErrorCategoryExternalization, err)
 		}
 	}
 
@@ -149,7 +150,7 @@ func (r *EventListResponse) LogAndReply(models []*model.Event, errorName string,
 		for _, model := range models {
 			proxy, err := r.CreateEventProxy(model)
 			if err != nil {
-				r.LogError("Externalization", err)
+				r.LogError(ErrorCategoryExternalization, err)
 				return reply, err
 			}
 			proxes = append(proxes, proxy)

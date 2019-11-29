@@ -5,5 +5,4 @@ type Service interface {
 	GetServiceName() string
 	Start() error
 	Stop()
-	IsStarted() bool
 }

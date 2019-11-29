@@ -19,17 +19,17 @@ func (h *EventHandler) Create(ctx context.Context, in *Event) (*Event, error) {
 
 	eventModel, err := h.CreateEventModel(in)
 	if err != nil {
-		response.LogAndReply(nil, "Internalization", err)
+		response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
 	err = h.ValidateEventModel(eventModel)
 	if err != nil {
-		return response.LogAndReply(eventModel, "Validation", err)
+		return response.LogAndReply(eventModel, ErrorCategoryValidation, err)
 	}
 
 	return response.LogAndReply(
 		eventModel,
-		"Repository",
+		ErrorCategoryRepository,
 		h.Repo.Create(eventModel),
 	)
 }
@@ -41,7 +41,7 @@ func (h *EventHandler) Read(ctx context.Context, in *EventIdentifier) (*Event, e
 	eventModel, err := h.Repo.Read(in.Value)
 	return response.LogAndReply(
 		eventModel,
-		"Repository",
+		ErrorCategoryRepository,
 		err,
 	)
 }
@@ -52,17 +52,17 @@ func (h *EventHandler) Update(ctx context.Context, in *Event) (*Event, error) {
 
 	eventModel, err := h.CreateEventModel(in)
 	if err != nil {
-		response.LogAndReply(nil, "Internalization", err)
+		response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
 	err = h.ValidateEventModel(eventModel)
 	if err != nil {
-		return response.LogAndReply(eventModel, "Validation", err)
+		return response.LogAndReply(eventModel, ErrorCategoryValidation, err)
 	}
 
 	return response.LogAndReply(
 		eventModel,
-		"Repository",
+		ErrorCategoryRepository,
 		h.Repo.Update(eventModel),
 	)
 }
@@ -71,7 +71,7 @@ func (h *EventHandler) Update(ctx context.Context, in *Event) (*Event, error) {
 func (h *EventHandler) Delete(ctx context.Context, in *EventIdentifier) (*EventIdentifier, error) {
 	response := NewEventIdentifierResponse(h, in)
 	return response.LogAndReply(
-		"Repository",
+		ErrorCategoryRepository,
 		h.Repo.Delete(in.Value),
 	)
 }
@@ -82,16 +82,16 @@ func (h *EventHandler) ReadList(ctx context.Context, in *EventListQuery) (*Event
 
 	from, err := ptypes.Timestamp(in.From)
 	if err != nil {
-		return response.LogAndReply(nil, "Internalization", err)
+		return response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
 	to, err := ptypes.Timestamp(in.To)
 	if err != nil {
-		return response.LogAndReply(nil, "Internalization", err)
+		return response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
 	eventModels, err := h.Repo.ReadList(in.UserID, from, to)
-	return response.LogAndReply(eventModels, "Repository", err)
+	return response.LogAndReply(eventModels, ErrorCategoryRepository, err)
 }
 
 //CreateEventModel creates new model from GRPC event proxy
