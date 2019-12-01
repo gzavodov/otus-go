@@ -1,9 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"flag"
-	"io/ioutil"
 	"log"
 
 	"github.com/gzavodov/otus-go/calendar/app/factory"
@@ -20,26 +19,17 @@ func main() {
 		*configFilePath = "./config/config.development.rpc.json"
 	}
 
-	configFile, err := ioutil.ReadFile(*configFilePath)
-	if err != nil {
-		log.Fatalf("Could not read configuration file: %v", err)
-	}
-
 	configuration := &config.Configuration{}
-	if json.Unmarshal(configFile, configuration) != nil {
-		log.Fatalf("Could not internalize configuration file data: %v", err)
-	}
-
-	if configuration.HTTPAddress == "" {
-		configuration.HTTPAddress = "127.0.0.1:9090"
-	}
-
-	if configuration.LogFilePath == "" {
-		configuration.LogFilePath = "stderr"
-	}
-
-	if configuration.LogLevel == "" {
-		configuration.LogLevel = "debug"
+	err := configuration.Load(
+		*configFilePath,
+		&config.Configuration{
+			HTTPAddress: "127.0.0.1:9090",
+			LogFilePath: "stderr",
+			LogLevel:    "debug",
+		},
+	)
+	if err != nil {
+		log.Fatalf("Could not load configuration: %v", err)
 	}
 
 	appLogger, err := logger.Create(configuration.LogFilePath, configuration.LogLevel)
@@ -48,7 +38,11 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	appRepo, err := factory.CreateEventRepository(configuration.EventRepositoryTypeID)
+	appRepo, err := factory.CreateEventRepository(
+		context.Background(),
+		configuration.EventRepositoryTypeID,
+		configuration.EventRepositoryDSN,
+	)
 	if err != nil {
 		log.Fatalf("Could not create event repository: %v", err)
 	}

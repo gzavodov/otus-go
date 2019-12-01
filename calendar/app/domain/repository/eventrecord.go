@@ -8,14 +8,14 @@ import (
 
 //EventRecord repository record for Calendar Event
 type EventRecord struct {
-	ID          uint32    `json:"id"`
+	ID          int64     `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Location    string    `json:"location"`
 	StartTime   time.Time `json:"startTime"`
 	EndTime     time.Time `json:"endTime"`
-	UserID      uint32    `json:"userId"`
-	CalendarID  uint32    `json:"calendarId"`
+	UserID      int64     `json:"userId"`
+	CalendarID  int64     `json:"calendarId"`
 	Created     time.Time `json:"created"`
 	LastUpdated time.Time `json:"lastUpdated"`
 }

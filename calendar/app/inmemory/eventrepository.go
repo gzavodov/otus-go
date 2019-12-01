@@ -14,15 +14,15 @@ import (
 //EventRepository thread safe in-memory implementation of EventRepository interface
 type EventRepository struct {
 	mu           sync.RWMutex
-	records      map[uint32]*repository.EventRecord
-	lastRecordID uint32
+	records      map[int64]*repository.EventRecord
+	lastRecordID int64
 }
 
 //NewEventRepository creates new in-memory EventRepository
 func NewEventRepository() *EventRepository {
 	return &EventRepository{
 		mu:      sync.RWMutex{},
-		records: make(map[uint32]*repository.EventRecord),
+		records: make(map[int64]*repository.EventRecord),
 	}
 }
 
@@ -50,7 +50,7 @@ func (r *EventRepository) Create(m *model.Event) error {
 }
 
 //Read get Calendar Event from repository by ID
-func (r *EventRepository) Read(ID uint32) (*model.Event, error) {
+func (r *EventRepository) Read(ID int64) (*model.Event, error) {
 	if ID <= 0 {
 		return nil, repository.NewError(repository.ErrorInvalidArgument, fmt.Sprintf("parameter 'ID' is invalid: %d", ID))
 	}
@@ -67,7 +67,7 @@ func (r *EventRepository) Read(ID uint32) (*model.Event, error) {
 }
 
 //ReadAll get all Calendar Events from repository
-func (r *EventRepository) ReadAll() []*model.Event {
+func (r *EventRepository) ReadAll() ([]*model.Event, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -81,11 +81,11 @@ func (r *EventRepository) ReadAll() []*model.Event {
 		func(i, j int) bool { return list[i].ID < list[j].ID },
 	)
 
-	return list
+	return list, nil
 }
 
 //ReadList get Calendar Events by interval specified by from and to params
-func (r *EventRepository) ReadList(userID uint32, from time.Time, to time.Time) ([]*model.Event, error) {
+func (r *EventRepository) ReadList(userID int64, from time.Time, to time.Time) ([]*model.Event, error) {
 	list := make([]*model.Event, 0, len(r.records))
 	for _, record := range r.records {
 		if userID > 0 && record.UserID != userID {
@@ -105,12 +105,12 @@ func (r *EventRepository) ReadList(userID uint32, from time.Time, to time.Time) 
 }
 
 //IsExists check if repository contains Calendar event with specified ID
-func (r *EventRepository) IsExists(ID uint32) bool {
+func (r *EventRepository) IsExists(ID int64) (bool, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	_, isFound := r.records[ID]
-	return isFound
+	return isFound, nil
 }
 
 //Update modifies Calendar Event in repository
@@ -139,7 +139,7 @@ func (r *EventRepository) Update(m *model.Event) error {
 }
 
 //Delete removes Calendar Event from repository by ID
-func (r *EventRepository) Delete(ID uint32) error {
+func (r *EventRepository) Delete(ID int64) error {
 	if ID <= 0 {
 		return repository.NewError(repository.ErrorInvalidArgument, fmt.Sprintf("parameter 'ID' is invalid: %d", ID))
 	}
@@ -157,11 +157,11 @@ func (r *EventRepository) Delete(ID uint32) error {
 }
 
 //GetTotalCount returns overall amouunt of calendar events in repository
-func (r *EventRepository) GetTotalCount() int {
+func (r *EventRepository) GetTotalCount() (int64, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return len(r.records)
+	return int64(len(r.records)), nil
 }
 
 //Purge removes all Calendar records from repository
@@ -169,7 +169,7 @@ func (r *EventRepository) Purge() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.records = make(map[uint32]*repository.EventRecord)
+	r.records = make(map[int64]*repository.EventRecord)
 	r.lastRecordID = 0
 
 	return nil

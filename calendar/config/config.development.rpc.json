@@ -2,6 +2,7 @@
     "http_listen": "127.0.0.1:9090",
     "log_file": "log.json",
     "log_level": "debug",
-    "event_repository_type_id": 1,
-    "endpoint_service_type_id": 2
+    "endpoint_service_type_id": 2,
+    "event_repository_type_id": 2,
+    "event_repository_dsn": "user= password= host=127.0.0.1 port=5432 database=calendar sslmode=disable"
 }

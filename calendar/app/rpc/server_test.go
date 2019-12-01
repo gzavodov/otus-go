@@ -2,12 +2,13 @@ package rpc
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/gzavodov/otus-go/calendar/app/inmemory"
 	"github.com/gzavodov/otus-go/calendar/app/logger"
+	"github.com/gzavodov/otus-go/calendar/app/sqldb"
 	"google.golang.org/grpc"
 )
 
@@ -18,13 +19,17 @@ func TestGRPCService(t *testing.T) {
 	}
 	defer appLogger.Sync()
 
-	appRepo := inmemory.NewEventRepository()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	dataSourceName, ok := os.LookupEnv("CALENDAR_REPOSITORY_DSN")
+	if !ok {
+		t.Fatal("The environment variable CALENDAR_REPOSITORY_DSN is reqiured")
+	}
+	appRepo := sqldb.NewEventRepository(ctx, dataSourceName)
 
 	serverAddress := "127.0.0.1:9090"
 	server := NewServer(serverAddress, appRepo, appLogger)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
 
 	go func() {
 		err := server.Start()

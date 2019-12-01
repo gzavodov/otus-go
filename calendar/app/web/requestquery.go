@@ -32,6 +32,17 @@ func (q *RequestQuery) ParseUint32(name string, defaultValue uint32) (uint32, er
 	return uint32(result), err
 }
 
+//ParseInt64 parses unit32 parameter from form by specified name
+func (q *RequestQuery) ParseInt64(name string, defaultValue int64) (int64, error) {
+	value := q.parse().Get(name)
+	if len(value) == 0 {
+		return defaultValue, nil
+	}
+
+	result, err := strconv.ParseInt(value, 10, 64)
+	return result, err
+}
+
 //ParseDate parses date parameter from query string by specified name
 func (q *RequestQuery) ParseDate(name string, defaultValue time.Time) (time.Time, error) {
 	value := q.parse().Get(name)

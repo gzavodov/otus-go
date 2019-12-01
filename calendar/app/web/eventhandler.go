@@ -19,7 +19,7 @@ type EventError struct {
 
 //EventIDResult event action result with identifier
 type EventIDResult struct {
-	Result uint32 `json:"result"`
+	Result int64 `json:"result"`
 }
 
 //EventResult event action result with model
@@ -129,7 +129,7 @@ func (h *EventHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	form := RequestForm{Request: r}
 
-	eventID, err := form.ParseUint32("ID", 0)
+	eventID, err := form.ParseInt64("ID", 0)
 	if err != nil {
 		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -186,7 +186,7 @@ func (h *EventHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := RequestForm{Request: r}
-	eventID, err := form.ParseUint32("ID", 0)
+	eventID, err := form.ParseInt64("ID", 0)
 	if err != nil {
 		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -236,7 +236,7 @@ func (h *EventHandler) EventsForDay(w http.ResponseWriter, r *http.Request) {
 	from := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 	to := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, time.UTC)
 
-	userID, err := query.ParseUint32("userId", 0)
+	userID, err := query.ParseInt64("userId", 0)
 	if err != nil {
 		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -287,7 +287,7 @@ func (h *EventHandler) EventsForWeek(w http.ResponseWriter, r *http.Request) {
 	from := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1*dayIndex)
 	to := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, time.UTC).AddDate(0, 0, 6-dayIndex)
 
-	userID, err := query.ParseUint32("userId", 0)
+	userID, err := query.ParseInt64("userId", 0)
 	if err != nil {
 		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -331,7 +331,7 @@ func (h *EventHandler) EventsForMonth(w http.ResponseWriter, r *http.Request) {
 	from := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, time.UTC)
 	to := time.Date(date.Year(), date.Month()+1, 0, 23, 59, 59, 0, time.UTC)
 
-	userID, err := query.ParseUint32("userId", 0)
+	userID, err := query.ParseInt64("userId", 0)
 	if err != nil {
 		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)

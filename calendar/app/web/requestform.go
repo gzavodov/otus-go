@@ -44,6 +44,21 @@ func (f *RequestForm) ParseUint32(name string, defaultValue uint32) (uint32, err
 	return uint32(result), err
 }
 
+//ParseInt64 parses unit32 parameter from form by specified name
+func (f *RequestForm) ParseInt64(name string, defaultValue int64) (int64, error) {
+	err := f.parse()
+	if err != nil {
+		return 0, err
+	}
+
+	value := f.Request.FormValue(name)
+	if len(value) == 0 {
+		return defaultValue, nil
+	}
+	result, err := strconv.ParseInt(value, 10, 64)
+	return result, err
+}
+
 //ParseEvent parses calendar event from form
 func (f *RequestForm) ParseEvent() (*model.Event, error) {
 	var err error
@@ -76,19 +91,19 @@ func (f *RequestForm) ParseEvent() (*model.Event, error) {
 		}
 	}
 
-	userID := uint64(0)
+	userID := int64(0)
 	str = f.Request.FormValue("UserID")
 	if len(str) > 0 {
-		userID, err = strconv.ParseUint(str, 10, 32)
+		userID, err = strconv.ParseInt(str, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse UserID form \"%s\" (%w)", str, err)
 		}
 	}
 
-	calendarID := uint64(0)
+	calendarID := int64(0)
 	str = f.Request.FormValue("CalendarID")
 	if len(str) > 0 {
-		calendarID, err = strconv.ParseUint(str, 10, 32)
+		calendarID, err = strconv.ParseInt(str, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse calendarID form \"%s\" (%w)", str, err)
 		}
@@ -100,8 +115,8 @@ func (f *RequestForm) ParseEvent() (*model.Event, error) {
 			Location:    location,
 			StartTime:   startTime,
 			EndTime:     endTime,
-			UserID:      uint32(userID),
-			CalendarID:  uint32(calendarID),
+			UserID:      userID,
+			CalendarID:  calendarID,
 		},
 		nil
 }
