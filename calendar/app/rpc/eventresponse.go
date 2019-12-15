@@ -43,6 +43,8 @@ func (r *EventResponseBase) CreateEventProxy(eventModel *model.Event) (*Event, e
 	}
 	eventProxy.EndTime = endTime
 
+	eventProxy.NotifyBefore = eventModel.NotifyBefore.Nanoseconds()
+
 	eventProxy.UserID = eventModel.UserID
 	eventProxy.CalendarID = eventModel.CalendarID
 

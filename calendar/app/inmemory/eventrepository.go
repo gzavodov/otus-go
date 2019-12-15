@@ -104,6 +104,32 @@ func (r *EventRepository) ReadList(userID int64, from time.Time, to time.Time) (
 	return list, nil
 }
 
+//ReadNotificationList get calendar events for notification
+func (r *EventRepository) ReadNotificationList(userID int64, from time.Time) ([]*model.Event, error) {
+	from = from.UTC()
+
+	list := make([]*model.Event, 0, len(r.records))
+	for _, record := range r.records {
+		if userID > 0 && record.UserID != userID {
+			continue
+		}
+
+		currentNotifyTime := record.StartTime.Add(time.Duration(-1 * int64(record.NotifyBefore)))
+		isMatched := (from.Before(record.StartTime) || from.Equal(record.StartTime)) &&
+			(from.After(currentNotifyTime) || from.Equal(currentNotifyTime))
+		if isMatched {
+			list = append(list, repository.NewCalendarEventModel(record))
+		}
+	}
+
+	sort.SliceStable(
+		list,
+		func(i, j int) bool { return list[i].ID < list[j].ID },
+	)
+
+	return list, nil
+}
+
 //IsExists check if repository contains Calendar event with specified ID
 func (r *EventRepository) IsExists(ID int64) (bool, error) {
 	r.mu.RLock()
@@ -165,7 +191,7 @@ func (r *EventRepository) GetTotalCount() (int64, error) {
 }
 
 //Purge removes all Calendar records from repository
-func (r *EventRepository) Purge() error {
+func (r *EventRepository) purge() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

@@ -8,16 +8,17 @@ import (
 
 //EventRecord repository record for Calendar Event
 type EventRecord struct {
-	ID          int64     `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Location    string    `json:"location"`
-	StartTime   time.Time `json:"startTime"`
-	EndTime     time.Time `json:"endTime"`
-	UserID      int64     `json:"userId"`
-	CalendarID  int64     `json:"calendarId"`
-	Created     time.Time `json:"created"`
-	LastUpdated time.Time `json:"lastUpdated"`
+	ID           int64         `json:"id"`
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	Location     string        `json:"location"`
+	StartTime    time.Time     `json:"startTime"`
+	EndTime      time.Time     `json:"endTime"`
+	NotifyBefore time.Duration `json:"notifyBefore"`
+	UserID       int64         `json:"userId"`
+	CalendarID   int64         `json:"calendarId"`
+	Created      time.Time     `json:"created"`
+	LastUpdated  time.Time     `json:"lastUpdated"`
 }
 
 //CopyFromModel copy fields from model to repository record
@@ -26,6 +27,7 @@ func (r *EventRecord) CopyFromModel(m *model.Event) {
 	r.Description = m.Description
 	r.Location = m.Location
 	r.StartTime = m.StartTime
+	r.NotifyBefore = m.NotifyBefore
 	r.EndTime = m.EndTime
 	r.UserID = m.UserID
 	r.CalendarID = m.CalendarID
@@ -38,6 +40,7 @@ func (r *EventRecord) CopyToModel(m *model.Event) {
 	m.Location = r.Location
 	m.StartTime = r.StartTime
 	m.EndTime = r.EndTime
+	m.NotifyBefore = r.NotifyBefore
 	m.UserID = r.UserID
 	m.CalendarID = r.CalendarID
 }

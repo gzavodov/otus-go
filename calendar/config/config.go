@@ -12,12 +12,19 @@ import (
 
 //Configuration Web server configuration
 type Configuration struct {
-	HTTPAddress           string `json:"http_listen"`
-	LogFilePath           string `json:"log_file"`
-	LogLevel              string `json:"log_level"`
-	EndpointServiceTypeID int    `json:"endpoint_service_type_id"`
+	HTTPAddress string `json:"http_listen"`
+
+	LogFilePath string `json:"log_file"`
+	LogLevel    string `json:"log_level"`
+
+	EndpointServiceTypeID int `json:"endpoint_service_type_id"`
+
 	EventRepositoryTypeID int    `json:"event_repository_type_id"`
 	EventRepositoryDSN    string `json:"event_repository_dsn"`
+
+	AMPQTypeID  int    `json:"ampq_type_id"`
+	AMPQName    string `json:"ampq_name"`
+	AMPQAddress string `json:"ampq_address"`
 }
 
 //Load read configuration from file anf from os environment variables
@@ -54,6 +61,18 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 
 		if c.EventRepositoryDSN == "" {
 			c.EventRepositoryDSN = defaultVal.EventRepositoryDSN
+		}
+
+		if c.AMPQTypeID <= 0 {
+			c.AMPQTypeID = defaultVal.AMPQTypeID
+		}
+
+		if c.AMPQName == "" {
+			c.AMPQName = defaultVal.AMPQName
+		}
+
+		if c.AMPQAddress == "" {
+			c.AMPQAddress = defaultVal.AMPQAddress
 		}
 	}
 

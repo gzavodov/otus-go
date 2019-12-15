@@ -50,7 +50,7 @@ func TestInMemoryRepository(t *testing.T) {
 				t.Error(CouldNotCreateObjectError())
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::Read",
@@ -76,7 +76,7 @@ func TestInMemoryRepository(t *testing.T) {
 				t.Error(ObjectNotMatchedError(source, result))
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::Update",
@@ -108,7 +108,7 @@ func TestInMemoryRepository(t *testing.T) {
 				t.Error(ObjectNotMatchedError(source, result))
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::Delete",
@@ -138,7 +138,7 @@ func TestInMemoryRepository(t *testing.T) {
 				t.Error(CouldNotRemoveObjectError())
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::ReadAll",
@@ -186,6 +186,6 @@ func TestInMemoryRepository(t *testing.T) {
 				}
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 }

@@ -47,10 +47,11 @@ func TestSQLDbRepository(t *testing.T) {
 	t.Run("EventRepository::Create",
 		func(t *testing.T) {
 			source := &model.Event{
-				Title:     "Test Event #1 (2019-10-01T12:00:00)",
-				UserID:    1,
-				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				Title:        "Test Event #1 (2019-10-01T12:00:00)",
+				UserID:       1,
+				StartTime:    time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				NotifyBefore: 15 * time.Minute,
 			}
 			err := repo.Create(source)
 			if err != nil {
@@ -66,16 +67,17 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(CouldNotCreateObjectError())
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::Read",
 		func(t *testing.T) {
 			source := &model.Event{
-				Title:     "Test Event #1 (2019-10-02T12:00:00)",
-				UserID:    1,
-				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				Title:        "Test Event #1 (2019-10-02T12:00:00)",
+				UserID:       1,
+				StartTime:    time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				NotifyBefore: 30 * time.Minute,
 			}
 
 			err := repo.Create(source)
@@ -92,29 +94,32 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectNotMatchedError(source, result))
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::ReadList",
 		func(t *testing.T) {
 			sources := []*model.Event{
 				{
-					Title:     "Test Event #1 (2019-10-01T12:00:00)",
-					UserID:    4,
-					StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					Title:        "Test Event #1 (2019-10-01T12:00:00)",
+					UserID:       4,
+					StartTime:    time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
 				},
 				{
-					Title:     "Test Event #2 (2019-10-02T13:00:00)",
-					UserID:    4,
-					StartTime: time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					Title:        "Test Event #2 (2019-10-02T13:00:00)",
+					UserID:       4,
+					StartTime:    time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
 				},
 				{
-					Title:     "Test Event #3 (2019-10-03T14:00:00)",
-					UserID:    4,
-					StartTime: time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2019, 10, 1, 15, 0, 0, 0, time.UTC),
+					Title:        "Test Event #3 (2019-10-03T14:00:00)",
+					UserID:       4,
+					StartTime:    time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 10, 1, 15, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
 				},
 			}
 
@@ -134,15 +139,16 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectListNotMatchedError(sources, results))
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 	t.Run("EventRepository::Update",
 		func(t *testing.T) {
 			source := &model.Event{
-				Title:     "Test Event #1 (2019-10-03T12:00:00)",
-				UserID:    1,
-				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				Title:        "Test Event #1 (2019-10-03T12:00:00)",
+				UserID:       1,
+				StartTime:    time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				NotifyBefore: 30 * time.Minute,
 			}
 
 			err := repo.Create(source)
@@ -165,16 +171,17 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectNotMatchedError(source, result))
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 
 	t.Run("EventRepository::Delete & IsExists",
 		func(t *testing.T) {
 			source := &model.Event{
-				Title:     "Test Event #1 (2019-10-04T12:00:00)",
-				UserID:    1,
-				StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				Title:        "Test Event #1 (2019-10-04T12:00:00)",
+				UserID:       1,
+				StartTime:    time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+				NotifyBefore: 30 * time.Minute,
 			}
 			err := repo.Create(source)
 			if err != nil {
@@ -195,28 +202,31 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(CouldNotRemoveObjectError())
 			}
 
-			repo.Purge()
+			repo.purge()
 		})
 	t.Run("EventRepository::ReadAll && GetTotalCount",
 		func(t *testing.T) {
 			sources := []*model.Event{
 				{
-					Title:     "Test Event #1 (2019-10-01T12:00:00)",
-					UserID:    1,
-					StartTime: time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					Title:        "Test Event #1 (2019-10-01T12:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 10, 1, 12, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
 				},
 				{
-					Title:     "Test Event #2 (2019-10-02T13:00:00)",
-					UserID:    1,
-					StartTime: time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					Title:        "Test Event #2 (2019-10-02T13:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 10, 1, 13, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
 				},
 				{
-					Title:     "Test Event #3 (2019-10-03T14:00:00)",
-					UserID:    1,
-					StartTime: time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2019, 10, 1, 15, 0, 0, 0, time.UTC),
+					Title:        "Test Event #3 (2019-10-03T14:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 10, 1, 14, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 10, 1, 15, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
 				},
 			}
 
@@ -251,6 +261,65 @@ func TestSQLDbRepository(t *testing.T) {
 				}
 			}
 
-			repo.Purge()
+			repo.purge()
+		})
+	t.Run("EventRepository::ReadNotificationList",
+		func(t *testing.T) {
+			sources := []*model.Event{
+				{
+					Title:        "Test Event #1 (2019-12-01T12:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 12, 1, 12, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 12, 1, 13, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
+				},
+				{
+					Title:        "Test Event #2 (2019-12-05T09:50:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 12, 5, 9, 50, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 12, 5, 10, 50, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
+				},
+				{
+					Title:        "Test Event #3 (2019-12-05T10:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 12, 5, 10, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 12, 5, 11, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
+				},
+				{
+					Title:        "Test Event #4 (2019-12-07T15:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 12, 7, 15, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 12, 7, 16, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
+				},
+				{
+					Title:        "Test Event #5 (2019-12-10T09:00:00)",
+					UserID:       1,
+					StartTime:    time.Date(2019, 12, 10, 9, 0, 0, 0, time.UTC),
+					EndTime:      time.Date(2019, 12, 10, 10, 0, 0, 0, time.UTC),
+					NotifyBefore: 30 * time.Minute,
+				},
+			}
+
+			for _, source := range sources {
+				err := repo.Create(source)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			results, err := repo.ReadNotificationList(0, time.Date(2019, 12, 5, 9, 45, 0, 0, time.UTC))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			//Followed events are expected: "Test Event #2 (2019-12-05T09:50:00)", "Test Event #3 (2019-12-05T10:00:00)"
+			if len(results) != 2 {
+				t.Error(ObjectListNotMatchedError(sources, results))
+			}
+
+			repo.purge()
 		})
 }

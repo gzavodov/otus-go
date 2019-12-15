@@ -91,16 +91,17 @@ func (r *EventRepository) Create(m *model.Event) error {
 		r.ctx,
 		`INSERT INTO event(title, 
 			description, location, 
-			start_time, end_time, 
+			start_time, end_time, notify_before,
 			user_id, calendar_id, 
 			created, last_updated
-		) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id`,
 		m.Title,
 		m.Description,
 		m.Location,
 		m.StartTime.UTC(),
 		m.EndTime.UTC(),
+		m.NotifyBefore,
 		m.UserID,
 		m.CalendarID,
 		now,
@@ -168,12 +169,12 @@ func (r *EventRepository) Read(ID int64) (*model.Event, error) {
 
 	row := r.conn.QueryRow(
 		r.ctx,
-		`SELECT id, title, description, location, start_time, end_time, user_id, calendar_id FROM event WHERE id = $1`,
+		`SELECT id, title, description, location, start_time, end_time, notify_before, user_id, calendar_id FROM event WHERE id = $1`,
 		ID,
 	)
 
 	m := &model.Event{}
-	err := row.Scan(&m.ID, &m.Title, &m.Description, &m.Location, &m.StartTime, &m.EndTime, &m.UserID, &m.CalendarID)
+	err := row.Scan(&m.ID, &m.Title, &m.Description, &m.Location, &m.StartTime, &m.EndTime, &m.NotifyBefore, &m.UserID, &m.CalendarID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil,
@@ -197,7 +198,36 @@ func (r *EventRepository) Read(ID int64) (*model.Event, error) {
 	return m, nil
 }
 
-//ReadList get Calendar Events by interval specified by from and to params
+func (r *EventRepository) readFromRows(rows pgx.Rows) ([]*model.Event, error) {
+	list := make([]*model.Event, 0)
+	for rows.Next() {
+		m := &model.Event{}
+		err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Location, &m.StartTime, &m.EndTime, &m.NotifyBefore, &m.UserID, &m.CalendarID)
+		if err != nil {
+			return nil,
+				repository.WrapError(
+					repository.ErrorDataRetrievalFailure,
+					err,
+				)
+		}
+		m.StartTime = m.StartTime.UTC()
+		m.EndTime = m.EndTime.UTC()
+
+		list = append(list, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil,
+			repository.WrapError(
+				repository.ErrorDataRetrievalFailure,
+				err,
+			)
+	}
+
+	return list, nil
+}
+
+//ReadList get calendar events by interval specified by from and to params
 func (r *EventRepository) ReadList(userID int64, from time.Time, to time.Time) ([]*model.Event, error) {
 	if err := r.Connect(); err != nil {
 		return nil, err
@@ -223,7 +253,7 @@ func (r *EventRepository) ReadList(userID int64, from time.Time, to time.Time) (
 		conditions = append(conditions, fmt.Sprintf("end_time <= $%d", len(params)))
 	}
 
-	query := `SELECT id, title, description, location, start_time, end_time, user_id, calendar_id FROM event`
+	query := `SELECT id, title, description, location, start_time, end_time, notify_before, user_id, calendar_id FROM event`
 	if len(conditions) > 0 {
 		query = fmt.Sprintf("%s WHERE %s ORDER BY id ASC", query, strings.Join(conditions, " AND "))
 	} else {
@@ -240,32 +270,52 @@ func (r *EventRepository) ReadList(userID int64, from time.Time, to time.Time) (
 	}
 	defer rows.Close()
 
-	list := make([]*model.Event, 0, 10)
-	for rows.Next() {
-		m := &model.Event{}
-		err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Location, &m.StartTime, &m.EndTime, &m.UserID, &m.CalendarID)
-		if err != nil {
-			return nil,
-				repository.WrapError(
-					repository.ErrorDataRetrievalFailure,
-					err,
-				)
-		}
-		m.StartTime = m.StartTime.UTC()
-		m.EndTime = m.EndTime.UTC()
+	return r.readFromRows(rows)
+}
 
-		list = append(list, m)
+//ReadNotificationList get calendar events for notification
+func (r *EventRepository) ReadNotificationList(userID int64, from time.Time) ([]*model.Event, error) {
+	if err := r.Connect(); err != nil {
+		return nil, err
 	}
 
-	if err := rows.Err(); err != nil {
+	from = from.UTC()
+
+	conditions := make([]string, 0, 3)
+	params := make([]interface{}, 0, 3)
+	if userID > 0 {
+		params = append(params, userID)
+		conditions = append(conditions, fmt.Sprintf("user_id = $%d", len(params)))
+	}
+
+	var condition string
+
+	params = append(params, from)
+
+	condition = fmt.Sprintf("(start_time - notify_before) <= $%d", len(params))
+	conditions = append(conditions, condition)
+
+	condition = fmt.Sprintf("start_time >= $%d", len(params))
+	conditions = append(conditions, condition)
+
+	query := `SELECT id, title, description, location, start_time, end_time, notify_before, user_id, calendar_id FROM event`
+	if len(conditions) > 0 {
+		query = fmt.Sprintf("%s WHERE %s ORDER BY id ASC", query, strings.Join(conditions, " AND "))
+	} else {
+		query = fmt.Sprintf("%s ORDER BY id ASC", query)
+	}
+
+	rows, err := r.conn.Query(r.ctx, query, params...)
+	if err != nil {
 		return nil,
 			repository.WrapError(
 				repository.ErrorDataRetrievalFailure,
 				err,
 			)
 	}
+	defer rows.Close()
 
-	return list, nil
+	return r.readFromRows(rows)
 }
 
 //ReadAll get all Calendar Events from repository
@@ -298,15 +348,16 @@ func (r *EventRepository) Update(m *model.Event) error {
 		r.ctx,
 		`UPDATE event SET
 			title = $1, description = $2, location = $3, 
-			start_time = $4, end_time = $5, 
-			user_id = $6, calendar_id = $7, 
-			last_updated = $8
-		WHERE id = $9`,
+			start_time = $4, end_time = $5, notify_before = $6,
+			user_id = $7, calendar_id = $8, 
+			last_updated = $9
+		WHERE id = $10`,
 		m.Title,
 		m.Description,
 		m.Location,
 		m.StartTime.UTC(),
 		m.EndTime.UTC(),
+		m.NotifyBefore,
 		m.UserID,
 		m.CalendarID,
 		time.Now().UTC(),
@@ -386,7 +437,7 @@ func (r *EventRepository) GetTotalCount() (int64, error) {
 }
 
 //Purge removes all Calendar records from repository
-func (r *EventRepository) Purge() error {
+func (r *EventRepository) purge() error {
 	if err := r.Connect(); err != nil {
 		return err
 	}

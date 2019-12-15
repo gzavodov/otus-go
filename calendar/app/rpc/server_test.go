@@ -63,10 +63,11 @@ func TestGRPCService(t *testing.T) {
 	}
 
 	event := &Event{
-		Title:     "Test Event (2019-10-01T12:00:00)",
-		UserID:    1,
-		StartTime: startTime,
-		EndTime:   endTime,
+		Title:        "RPC Test Event (2019-10-01T12:00:00)",
+		UserID:       1,
+		StartTime:    startTime,
+		EndTime:      endTime,
+		NotifyBefore: int64(30 * time.Minute),
 	}
 
 	event, err = client.Create(ctx, event)

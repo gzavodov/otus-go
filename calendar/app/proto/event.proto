@@ -10,6 +10,7 @@ service EventService {
     rpc Update(Event) returns (Event);
     rpc Delete(EventIdentifier) returns(EventIdentifier);
     rpc ReadList(EventListQuery) returns(EventListReply);
+    rpc ReadNotificationList(EventListQuery) returns(EventListReply);
 }
 
 message EventIdentifier {
@@ -17,9 +18,9 @@ message EventIdentifier {
 }
 
 message EventListQuery {
-    int64                       UserID = 1;
-    google.protobuf.Timestamp   From   = 2;
-    google.protobuf.Timestamp   To     = 3;
+    int64                       UserID      = 1;
+    google.protobuf.Timestamp   From        = 2;
+    google.protobuf.Timestamp   To          = 3;
 }
 
 message EventListReply {
@@ -27,13 +28,14 @@ message EventListReply {
 }
 
 message Event {
-    int64                       ID          = 1;
-    string                      Title       = 2;
-    string                      Description = 3;
-    string                      Location    = 4;
-    google.protobuf.Timestamp   StartTime   = 5;
-    google.protobuf.Timestamp   EndTime     = 6;
-    int64                       UserID      = 7;
-    int64                       CalendarID  = 8;
+    int64                       ID              = 1;
+    string                      Title           = 2;
+    string                      Description     = 3;
+    string                      Location        = 4;
+    google.protobuf.Timestamp   StartTime       = 5;
+    google.protobuf.Timestamp   EndTime         = 6;
+    int64                       NotifyBefore    = 7;
+    int64                       UserID          = 8;
+    int64                       CalendarID      = 9;
 }
 

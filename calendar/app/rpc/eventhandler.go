@@ -2,6 +2,7 @@ package rpc
 
 import (
 	context "context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gzavodov/otus-go/calendar/app/domain/model"
@@ -94,6 +95,19 @@ func (h *EventHandler) ReadList(ctx context.Context, in *EventListQuery) (*Event
 	return response.LogAndReply(eventModels, ErrorCategoryRepository, err)
 }
 
+//ReadNotificationList returns list of calendar events for notification
+func (h *EventHandler) ReadNotificationList(ctx context.Context, in *EventListQuery) (*EventListReply, error) {
+	response := NewEventListResponse(h)
+
+	from, err := ptypes.Timestamp(in.From)
+	if err != nil {
+		return response.LogAndReply(nil, ErrorCategoryInternalization, err)
+	}
+
+	eventModels, err := h.Repo.ReadNotificationList(in.UserID, from)
+	return response.LogAndReply(eventModels, ErrorCategoryRepository, err)
+}
+
 //CreateEventModel creates new model from GRPC event proxy
 func (h *EventHandler) CreateEventModel(eventProxy *Event) (*model.Event, error) {
 	if eventProxy == nil {
@@ -118,6 +132,7 @@ func (h *EventHandler) CreateEventModel(eventProxy *Event) (*model.Event, error)
 	}
 	eventModel.EndTime = endTime
 
+	eventModel.NotifyBefore = time.Duration(eventProxy.NotifyBefore)
 	eventModel.UserID = eventProxy.UserID
 	eventModel.CalendarID = eventProxy.CalendarID
 
