@@ -25,6 +25,8 @@ type Configuration struct {
 	AMPQTypeID  int    `json:"ampq_type_id"`
 	AMPQName    string `json:"ampq_name"`
 	AMPQAddress string `json:"ampq_address"`
+
+	SchedulerCheckInterval int `json:"scheduler_check_interval"`
 }
 
 //Load read configuration from file anf from os environment variables
@@ -74,6 +76,10 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 		if c.AMPQAddress == "" {
 			c.AMPQAddress = defaultVal.AMPQAddress
 		}
+
+		if c.SchedulerCheckInterval <= 0 {
+			c.SchedulerCheckInterval = defaultVal.SchedulerCheckInterval
+		}
 	}
 
 	return nil
@@ -95,6 +101,7 @@ func (c *Configuration) LoadFromFile(filePath string) error {
 
 //LoadFromEvironment read configuration from environment variables
 func (c *Configuration) LoadFromEvironment() error {
+	//Repository
 	if s, ok := os.LookupEnv("CALENDAR_REPOSITORY_TYPE"); ok {
 		result, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
@@ -105,6 +112,23 @@ func (c *Configuration) LoadFromEvironment() error {
 
 	if s, ok := os.LookupEnv("CALENDAR_REPOSITORY_DSN"); ok {
 		c.EventRepositoryDSN = s
+	}
+
+	//AMPQ
+	if s, ok := os.LookupEnv("AMPQ_TYPE_ID"); ok {
+		result, err := strconv.ParseInt(s, 10, 32)
+		if err != nil {
+			return fmt.Errorf("Could not parse AMPQ_TYPE_ID variable: %w", err)
+		}
+		c.AMPQTypeID = int(result)
+	}
+
+	if s, ok := os.LookupEnv("AMPQ_NAME"); ok {
+		c.AMPQName = s
+	}
+
+	if s, ok := os.LookupEnv("AMPQ_ADDRESS"); ok {
+		c.AMPQAddress = s
 	}
 
 	return nil

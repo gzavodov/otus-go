@@ -101,6 +101,7 @@ func main() {
 			context.Background(),
 			queueChannel,
 			appRepo,
+			configuration.SchedulerCheckInterval,
 			appLogger,
 		)
 
@@ -122,7 +123,7 @@ func main() {
 			log.Fatalf("Could not create queue channel: %v", err)
 		}
 
-		server := scheduler.NewClient(
+		client := scheduler.NewClient(
 			context.Background(),
 			queueChannel,
 			appLogger,
@@ -130,7 +131,7 @@ func main() {
 
 		log.Printf("Starting sheduler client on queue %s on %s...\n", configuration.AMPQName, configuration.AMPQAddress)
 
-		err = server.Start()
+		err = client.Start()
 		if err != nil {
 			log.Fatalf("Could not start scheduler client: %v", err)
 		}

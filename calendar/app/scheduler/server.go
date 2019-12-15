@@ -11,16 +11,20 @@ import (
 )
 
 //NewServer creates new scheduler server
-func NewServer(ctx context.Context, channel queue.NotificationChannel, repo repository.EventRepository, logger *zap.Logger) *Server {
-	return &Server{ctx: ctx, channel: channel, repo: repo, logger: logger}
+func NewServer(ctx context.Context, channel queue.NotificationChannel, repo repository.EventRepository, checkInterval int, logger *zap.Logger) *Server {
+	if checkInterval <= 0 {
+		checkInterval = 60
+	}
+	return &Server{ctx: ctx, channel: channel, repo: repo, checkInterval: checkInterval, logger: logger}
 }
 
 //Server event reminder service
 type Server struct {
-	ctx     context.Context
-	channel queue.NotificationChannel
-	repo    repository.EventRepository
-	logger  *zap.Logger
+	ctx           context.Context
+	channel       queue.NotificationChannel
+	repo          repository.EventRepository
+	checkInterval int
+	logger        *zap.Logger
 }
 
 //Start starts scheduler server
@@ -35,7 +39,7 @@ func (s *Server) Start() error {
 		select {
 		case <-s.ctx.Done():
 			return nil
-		case <-time.After(1 * time.Minute):
+		case <-time.After(time.Duration(s.checkInterval) * time.Second):
 			err = s.Check()
 			if err != nil {
 				s.LogError(ErrorCategoryRepository, err)

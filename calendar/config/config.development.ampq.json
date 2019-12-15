@@ -7,5 +7,6 @@
     "event_repository_dsn": "user= password= host=127.0.0.1 port=5432 database=calendar sslmode=disable",
     "ampq_type_id": 1,
     "ampq_name": "calendar-notifications",
-    "ampq_address": "amqp://guest:guest@localhost:5672/"
+    "ampq_address": "amqp://guest:guest@localhost:5672/",
+    "scheduler_check_interval": 60
 }
