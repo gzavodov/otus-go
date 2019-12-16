@@ -1,4 +1,4 @@
-package factory
+package endpointfactory
 
 import (
 	"fmt"
@@ -12,17 +12,17 @@ import (
 
 //Endpoint service Type
 const (
-	EndpointTypeUnknown = 0
-	EndpointTypeWeb     = 1
-	EndpointTypeGRPC    = 2
+	TypeUnknown = 0
+	TypeWeb     = 1
+	TypeGRPC    = 2
 )
 
 //CreateEndpointService creates endpoint service by type
 func CreateEndpointService(typeID int, address string, repo repository.EventRepository, logger *zap.Logger) (endpoint.Service, error) {
 	switch typeID {
-	case EndpointTypeWeb:
+	case TypeWeb:
 		return web.NewServer(address, repo, logger), nil
-	case EndpointTypeGRPC:
+	case TypeGRPC:
 		return rpc.NewServer(address, repo, logger), nil
 	default:
 		return nil, fmt.Errorf("endpoint service type %d is not supported in current context", typeID)

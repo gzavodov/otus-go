@@ -5,9 +5,10 @@ import (
 	"flag"
 	"log"
 
-	"github.com/gzavodov/otus-go/calendar/app/factory"
+	"github.com/gzavodov/otus-go/calendar/app/endpointfactory"
 	"github.com/gzavodov/otus-go/calendar/app/logger"
 	"github.com/gzavodov/otus-go/calendar/app/queuefactory"
+	"github.com/gzavodov/otus-go/calendar/app/repofactory"
 	"github.com/gzavodov/otus-go/calendar/app/scheduler"
 	"github.com/gzavodov/otus-go/calendar/config"
 )
@@ -59,7 +60,7 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	appRepo, err := factory.CreateEventRepository(
+	appRepo, err := repofactory.CreateEventRepository(
 		context.Background(),
 		configuration.EventRepositoryTypeID,
 		configuration.EventRepositoryDSN,
@@ -69,7 +70,7 @@ func main() {
 	}
 
 	if *mode == modeWeb || *mode == modeRPC {
-		service, err := factory.CreateEndpointService(
+		service, err := endpointfactory.CreateEndpointService(
 			configuration.EndpointServiceTypeID,
 			configuration.HTTPAddress,
 			appRepo,

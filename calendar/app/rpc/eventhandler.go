@@ -2,10 +2,8 @@ package rpc
 
 import (
 	context "context"
-	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/gzavodov/otus-go/calendar/app/domain/model"
 	"github.com/gzavodov/otus-go/calendar/app/endpoint"
 )
 
@@ -18,12 +16,12 @@ type EventHandler struct {
 func (h *EventHandler) Create(ctx context.Context, in *Event) (*Event, error) {
 	response := NewEventResponse(h, in)
 
-	eventModel, err := h.CreateEventModel(in)
+	eventModel, err := CreateEventModel(in)
 	if err != nil {
 		response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
-	err = h.ValidateEventModel(eventModel)
+	err = ValidateEventModel(eventModel)
 	if err != nil {
 		return response.LogAndReply(eventModel, ErrorCategoryValidation, err)
 	}
@@ -51,12 +49,12 @@ func (h *EventHandler) Read(ctx context.Context, in *EventIdentifier) (*Event, e
 func (h *EventHandler) Update(ctx context.Context, in *Event) (*Event, error) {
 	response := NewEventResponse(h, in)
 
-	eventModel, err := h.CreateEventModel(in)
+	eventModel, err := CreateEventModel(in)
 	if err != nil {
 		response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
-	err = h.ValidateEventModel(eventModel)
+	err = ValidateEventModel(eventModel)
 	if err != nil {
 		return response.LogAndReply(eventModel, ErrorCategoryValidation, err)
 	}
@@ -106,41 +104,4 @@ func (h *EventHandler) ReadNotificationList(ctx context.Context, in *EventListQu
 
 	eventModels, err := h.Repo.ReadNotificationList(in.UserID, from)
 	return response.LogAndReply(eventModels, ErrorCategoryRepository, err)
-}
-
-//CreateEventModel creates new model from GRPC event proxy
-func (h *EventHandler) CreateEventModel(eventProxy *Event) (*model.Event, error) {
-	if eventProxy == nil {
-		return &model.Event{}, nil
-	}
-
-	eventModel := &model.Event{}
-	eventModel.ID = eventProxy.ID
-	eventModel.Title = eventProxy.Title
-	eventModel.Description = eventProxy.Description
-	eventModel.Location = eventProxy.Location
-
-	startTime, err := ptypes.Timestamp(eventProxy.StartTime)
-	if err != nil {
-		return nil, err
-	}
-	eventModel.StartTime = startTime
-
-	endTime, err := ptypes.Timestamp(eventProxy.EndTime)
-	if err != nil {
-		return nil, err
-	}
-	eventModel.EndTime = endTime
-
-	eventModel.NotifyBefore = time.Duration(eventProxy.NotifyBefore)
-	eventModel.UserID = eventProxy.UserID
-	eventModel.CalendarID = eventProxy.CalendarID
-
-	return eventModel, nil
-}
-
-//ValidateEventModel validates calendar event model
-func (h *EventHandler) ValidateEventModel(eventModel *model.Event) error {
-	validator := model.EventValidator{Event: eventModel}
-	return validator.Validate().Error()
 }

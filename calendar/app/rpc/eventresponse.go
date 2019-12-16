@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"github.com/golang/protobuf/ptypes"
 	"github.com/gzavodov/otus-go/calendar/app/domain/model"
 	"github.com/gzavodov/otus-go/calendar/app/domain/repository"
 	"google.golang.org/grpc/codes"
@@ -16,39 +15,6 @@ type EventResponseBase struct {
 //LogError writes error in log
 func (r *EventResponseBase) LogError(errorName string, err error) {
 	r.Handler.LogError(errorName, err)
-}
-
-//CreateEventProxy creates new GRPC event proxy from model
-func (r *EventResponseBase) CreateEventProxy(eventModel *model.Event) (*Event, error) {
-	if eventModel == nil {
-		return &Event{}, nil
-	}
-
-	eventProxy := &Event{
-		ID:          eventModel.ID,
-		Title:       eventModel.Title,
-		Description: eventModel.Description,
-		Location:    eventModel.Location,
-	}
-
-	startTime, err := ptypes.TimestampProto(eventModel.StartTime)
-	if err != nil {
-		return nil, err
-	}
-	eventProxy.StartTime = startTime
-
-	endTime, err := ptypes.TimestampProto(eventModel.EndTime)
-	if err != nil {
-		return nil, err
-	}
-	eventProxy.EndTime = endTime
-
-	eventProxy.NotifyBefore = eventModel.NotifyBefore.Nanoseconds()
-
-	eventProxy.UserID = eventModel.UserID
-	eventProxy.CalendarID = eventModel.CalendarID
-
-	return eventProxy, nil
 }
 
 //PrepareReplyError returns GRPC error
@@ -95,7 +61,7 @@ func (r *EventResponse) LogAndReply(model *model.Event, errorName string, err er
 
 	var outgoingProxy *Event
 	if model != nil {
-		outgoingProxy, err = r.CreateEventProxy(model)
+		outgoingProxy, err = CreateEventProxy(model)
 		if err != nil {
 			r.LogError(ErrorCategoryExternalization, err)
 		}
@@ -150,7 +116,7 @@ func (r *EventListResponse) LogAndReply(models []*model.Event, errorName string,
 	if len(models) > 0 {
 		proxes := make([]*Event, 0, len(models))
 		for _, model := range models {
-			proxy, err := r.CreateEventProxy(model)
+			proxy, err := CreateEventProxy(model)
 			if err != nil {
 				r.LogError(ErrorCategoryExternalization, err)
 				return reply, err

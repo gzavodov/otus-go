@@ -4,13 +4,12 @@ import (
 	"context"
 	"flag"
 	"log"
-	"otus-go/calendar-scheduler/config"
 
-	//_ "github.com/gzavodov/otus-go/calendar-scheduler/config"
-	"github.com/gzavodov/otus-go/calendar/app/factory"
 	"github.com/gzavodov/otus-go/calendar/app/logger"
 	"github.com/gzavodov/otus-go/calendar/app/queuefactory"
+	"github.com/gzavodov/otus-go/calendar/app/repofactory"
 	"github.com/gzavodov/otus-go/calendar/app/scheduler"
+	"github.com/gzavodov/otus-go/calendar/config"
 )
 
 func main() {
@@ -26,8 +25,10 @@ func main() {
 	err := configuration.Load(
 		*configFilePath,
 		&config.Configuration{
-			LogFilePath: "stderr",
-			LogLevel:    "debug",
+			LogFilePath:           "stderr",
+			LogLevel:              "debug",
+			EventRepositoryTypeID: repofactory.TypeRPC,
+			EventRepositoryDSN:    "127.0.0.1:9090",
 		},
 	)
 	if err != nil {
@@ -40,7 +41,7 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	appRepo, err := factory.CreateEventRepository(
+	appRepo, err := repofactory.CreateEventRepository(
 		context.Background(),
 		configuration.EventRepositoryTypeID,
 		configuration.EventRepositoryDSN,
