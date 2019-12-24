@@ -17,7 +17,7 @@ type Configuration struct {
 	LogFilePath string `json:"log_file"`
 	LogLevel    string `json:"log_level"`
 
-	EndpointServiceTypeID int `json:"endpoint_service_type_id"`
+	ServiceTypeID int `json:"service_type_id"`
 
 	EventRepositoryTypeID int    `json:"event_repository_type_id"`
 	EventRepositoryDSN    string `json:"event_repository_dsn"`
@@ -53,8 +53,8 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 			c.LogLevel = defaultVal.LogLevel
 		}
 
-		if c.EndpointServiceTypeID <= 0 {
-			c.EndpointServiceTypeID = defaultVal.EndpointServiceTypeID
+		if c.ServiceTypeID <= 0 {
+			c.ServiceTypeID = defaultVal.ServiceTypeID
 		}
 
 		if c.EventRepositoryTypeID <= 0 {
@@ -107,11 +107,20 @@ func (c *Configuration) LoadFromEvironment() error {
 		if err != nil {
 			return fmt.Errorf("Could not parse CALENDAR_REPOSITORY_TYPE variable: %w", err)
 		}
-		c.EndpointServiceTypeID = int(result)
+		c.EventRepositoryTypeID = int(result)
 	}
 
 	if s, ok := os.LookupEnv("CALENDAR_REPOSITORY_DSN"); ok {
 		c.EventRepositoryDSN = s
+	}
+
+	//Service
+	if s, ok := os.LookupEnv("CALENDAR_SERVICE_TYPE"); ok {
+		result, err := strconv.ParseInt(s, 10, 32)
+		if err != nil {
+			return fmt.Errorf("Could not parse CALENDAR_SERVICE_TYPE variable: %w", err)
+		}
+		c.ServiceTypeID = int(result)
 	}
 
 	//AMPQ

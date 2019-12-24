@@ -25,7 +25,7 @@ const (
 
 //CreateService creates service by configuration
 func CreateService(ctx context.Context, conf *config.Configuration, logger *zap.Logger) (service.Service, error) {
-	switch conf.EndpointServiceTypeID {
+	switch conf.ServiceTypeID {
 	case TypeWeb:
 		repo, err := repofactory.CreateEventRepository(
 			ctx,
@@ -100,6 +100,6 @@ func CreateService(ctx context.Context, conf *config.Configuration, logger *zap.
 			nil
 
 	default:
-		return nil, fmt.Errorf("service type %d is not supported in current context", conf.EndpointServiceTypeID)
+		return nil, fmt.Errorf("service type %d is not supported in current context", conf.ServiceTypeID)
 	}
 }
