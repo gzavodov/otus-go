@@ -5,12 +5,9 @@ import (
 	"flag"
 	"log"
 
-	"github.com/gzavodov/otus-go/calendar/app/endpointfactory"
-	"github.com/gzavodov/otus-go/calendar/app/logger"
-	"github.com/gzavodov/otus-go/calendar/app/queuefactory"
-	"github.com/gzavodov/otus-go/calendar/app/repofactory"
-	"github.com/gzavodov/otus-go/calendar/app/scheduler"
-	"github.com/gzavodov/otus-go/calendar/config"
+	"github.com/gzavodov/otus-go/calendar/pkg/config"
+	"github.com/gzavodov/otus-go/calendar/pkg/logger"
+	"github.com/gzavodov/otus-go/calendar/service"
 )
 
 const (
@@ -60,81 +57,15 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	appRepo, err := repofactory.CreateEventRepository(
-		context.Background(),
-		configuration.EventRepositoryTypeID,
-		configuration.EventRepositoryDSN,
-	)
-	if err != nil {
-		log.Fatalf("Could not create event repository: %v", err)
-	}
-
-	if *mode == modeWeb || *mode == modeRPC {
-		service, err := endpointfactory.CreateEndpointService(
-			configuration.EndpointServiceTypeID,
-			configuration.HTTPAddress,
-			appRepo,
-			appLogger,
-		)
+	if *mode == modeWeb || *mode == modeRPC || *mode == modeAMPQWriter {
+		appService, err := service.CreateService(context.Background(), configuration, appLogger)
 		if err != nil {
-			log.Fatalf("Could not create endpoint service: %v", err)
+			log.Fatalf("Could not create service: %v", err)
 		}
 
-		log.Printf("Starting %s service on %s...\n", service.GetServiceName(), configuration.HTTPAddress)
-
-		err = service.Start()
-		if err != nil {
-			log.Fatalf("Could not start endpoint service: %v", err)
-		}
-	} else if *mode == modeAMPQWriter {
-		queueChannel, err := queuefactory.CreateQueueChannel(
-			context.Background(),
-			configuration.AMPQTypeID,
-			configuration.AMPQName,
-			configuration.AMPQAddress,
-		)
-
-		if err != nil {
-			log.Fatalf("Could not create queue channel: %v", err)
-		}
-
-		server := scheduler.NewServer(
-			context.Background(),
-			queueChannel,
-			appRepo,
-			configuration.SchedulerCheckInterval,
-			appLogger,
-		)
-
-		log.Printf("Starting sheduler server on queue %s on %s...\n", configuration.AMPQName, configuration.AMPQAddress)
-
-		err = server.Start()
-		if err != nil {
-			log.Fatalf("Could not start scheduler server: %v", err)
-		}
-	} else if *mode == modeAMPQReader {
-		queueChannel, err := queuefactory.CreateQueueChannel(
-			context.Background(),
-			configuration.AMPQTypeID,
-			configuration.AMPQName,
-			configuration.AMPQAddress,
-		)
-
-		if err != nil {
-			log.Fatalf("Could not create queue channel: %v", err)
-		}
-
-		client := scheduler.NewClient(
-			context.Background(),
-			queueChannel,
-			appLogger,
-		)
-
-		log.Printf("Starting sheduler client on queue %s on %s...\n", configuration.AMPQName, configuration.AMPQAddress)
-
-		err = client.Start()
-		if err != nil {
-			log.Fatalf("Could not start scheduler client: %v", err)
+		log.Printf("Starting %s service...\n", appService.GetServiceName())
+		if err := appService.Start(); err != nil {
+			log.Fatalf("Could not start service: %v", err)
 		}
 	}
 }

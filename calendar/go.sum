@@ -27,6 +27,7 @@ github.com/google/renameio v0.1.0 h1:GOZbcHa3HfsPKPlmyPyN2KEohoMXOhdMbHrvbpl2QaA
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/gzavodov/otus-go v0.0.0-20191110194826-368eaf838a73 h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
 github.com/gzavodov/otus-go v0.0.0-20191124122148-e8dd10f0c3a1 h1:irOKYUBTp7sBWb6p5v3KLcoX66bvN/jske362wh2RuQ=
+github.com/gzavodov/otus-go v0.0.0-20191216215243-d1c846cb2306 h1:GEYa8ri+FKsNSbLygKACxN5lfH3/M7cI8WC8n8l4cr4=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=
 github.com/jackc/chunkreader v1.0.0/go.mod h1:RT6O25fNZIuasFJRyZ4R/Y2BbhasbmZXF9QQ7T3kePo=
 github.com/jackc/chunkreader/v2 v2.0.0 h1:DUwgMQuuPnS0rhMXenUtZpqZqrR/30NWY+qQvTpSvEs=
