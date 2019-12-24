@@ -5,11 +5,11 @@ import (
 	"flag"
 	"log"
 
-	"github.com/gzavodov/otus-go/calendar/app/logger"
-	"github.com/gzavodov/otus-go/calendar/app/queuefactory"
-	"github.com/gzavodov/otus-go/calendar/app/repofactory"
-	"github.com/gzavodov/otus-go/calendar/app/scheduler"
-	"github.com/gzavodov/otus-go/calendar/config"
+	"github.com/gzavodov/otus-go/calendar/factory/queuefactory"
+	"github.com/gzavodov/otus-go/calendar/pkg/config"
+	"github.com/gzavodov/otus-go/calendar/pkg/logger"
+	"github.com/gzavodov/otus-go/calendar/service/rpc"
+	"github.com/gzavodov/otus-go/calendar/service/scheduler"
 )
 
 func main() {
@@ -18,17 +18,15 @@ func main() {
 	flag.Parse()
 
 	if *configFilePath == "" {
-		*configFilePath = "./config/config.development.ampq.json"
+		*configFilePath = "./config/config.development.json"
 	}
 
 	configuration := &config.Configuration{}
 	err := configuration.Load(
 		*configFilePath,
 		&config.Configuration{
-			LogFilePath:           "stderr",
-			LogLevel:              "debug",
-			EventRepositoryTypeID: repofactory.TypeRPC,
-			EventRepositoryDSN:    "127.0.0.1:9090",
+			LogFilePath: "stderr",
+			LogLevel:    "debug",
 		},
 	)
 	if err != nil {
@@ -41,15 +39,6 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	appRepo, err := repofactory.CreateEventRepository(
-		context.Background(),
-		configuration.EventRepositoryTypeID,
-		configuration.EventRepositoryDSN,
-	)
-	if err != nil {
-		log.Fatalf("Could not create event repository: %v", err)
-	}
-
 	queueChannel, err := queuefactory.CreateQueueChannel(
 		context.Background(),
 		configuration.AMPQTypeID,
@@ -61,18 +50,16 @@ func main() {
 		log.Fatalf("Could not create queue channel: %v", err)
 	}
 
-	server := scheduler.NewServer(
+	appService := scheduler.NewServer(
 		context.Background(),
 		queueChannel,
-		appRepo,
+		rpc.NewEventRepository(context.Background(), configuration.HTTPAddress),
 		configuration.SchedulerCheckInterval,
 		appLogger,
 	)
 
 	log.Printf("Starting sheduler server on queue %s on %s...\n", configuration.AMPQName, configuration.AMPQAddress)
-
-	err = server.Start()
-	if err != nil {
+	if err = appService.Start(); err != nil {
 		log.Fatalf("Could not start scheduler server: %v", err)
 	}
 }
