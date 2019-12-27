@@ -1,0 +1,26 @@
+# Dockerfile References: https://docs.docker.com/engine/reference/builder/
+
+# Builder
+FROM golang:1.13 as builder
+
+RUN mkdir -p /opt/calendar
+WORKDIR /opt/calendar
+
+COPY ./config/config.docker.json ./config.json
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 go build -o /opt/calendar/api .
+
+# Release
+FROM alpine:latest
+LABEL maintainer="Grigoriy Zavodov <zavodov@gmail.com>"
+
+RUN mkdir -p /calendar
+WORKDIR /calendar
+
+COPY --from=builder /opt/calendar/api ./api
+COPY --from=builder /opt/calendar/config.json ./config.json
+EXPOSE 8888
+ENTRYPOINT ["./api", "--config=config.json"]
