@@ -4,5 +4,5 @@
     "log_level": "debug",
     "service_type_id": 2,
     "event_repository_type_id": 2,
-    "event_repository_dsn": "user= password= host=127.0.0.1 port=5432 database=calendar sslmode=disable"
+    "event_repository_dsn": "user= password= host=127.0.0.1 port=5432 database= sslmode=disable"
 }

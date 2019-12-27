@@ -101,6 +101,11 @@ func (c *Configuration) LoadFromFile(filePath string) error {
 
 //LoadFromEvironment read configuration from environment variables
 func (c *Configuration) LoadFromEvironment() error {
+	//End Point IP-Address
+	if s, ok := os.LookupEnv("CALENDAR_HTTP_ADDRESS"); ok {
+		c.HTTPAddress = s
+	}
+
 	//Repository
 	if s, ok := os.LookupEnv("CALENDAR_REPOSITORY_TYPE"); ok {
 		result, err := strconv.ParseInt(s, 10, 32)
