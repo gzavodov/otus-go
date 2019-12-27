@@ -1,0 +1,9 @@
+{
+    "http_listen": "0.0.0.0:8888",
+    "log_file": "stdout",
+    "log_level": "debug",
+    "ampq_type_id": 1,
+    "ampq_name": "calendar-notifications",
+    "ampq_address": "amqp://guest:guest@0.0.0.0:5672/",
+    "scheduler_check_interval": 60
+}
