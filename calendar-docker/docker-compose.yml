@@ -28,6 +28,8 @@ services:
             - calendar_nw
     calendar_api:
         build: ../calendar-api
+        volumes:
+            - "./script/wait-for-it.sh:/calendar/wait-for-it.sh"
         depends_on:
             - postgres
         restart: on-failure
@@ -37,25 +39,32 @@ services:
             - 8888
         env_file:
             - ./env/api.env
+        entrypoint: ["bash", "-c", "./wait-for-it.sh postgres:5432 -- ./api --config=config.json"]
         networks:
             - calendar_nw
     calendar_scheduler:
         build: ../calendar-scheduler
+        volumes:
+            - "./script/wait-for-it.sh:/calendar/wait-for-it.sh"
         depends_on:
             - rabbit
             - calendar_api
         restart: on-failure
         env_file: 
             - ./env/scheduler.env
+        entrypoint: ["bash", "-c", "./wait-for-it.sh rabbitmq:15672 -- ./scheduler --config=config.json"]
         networks:
             - calendar_nw
     calendar_client:
         build: ../calendar-client
+        volumes:
+            - "./script/wait-for-it.sh:/calendar/wait-for-it.sh"
         depends_on:
             - rabbit
             - calendar_scheduler
         restart: on-failure
         env_file: 
             - ./env/client.env
+        entrypoint: ["bash", "-c", "./wait-for-it.sh rabbitmq:15672 -- ./client --config=config.json"]
         networks:
             - calendar_nw
