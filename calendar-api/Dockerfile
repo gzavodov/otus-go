@@ -4,9 +4,10 @@
 FROM golang:1.13 as builder
 
 RUN mkdir -p /opt/calendar
+RUN mkdir -p /opt/script
 WORKDIR /opt/calendar
 
-COPY ./script/wait-for-it.sh ./wait-for-it.sh
+COPY ./script/wait-for-it.sh /opt/script/wait-for-it.sh
 COPY ./config/config.docker.json ./config.json
 COPY go.mod go.sum ./
 RUN go mod download
@@ -22,7 +23,8 @@ RUN mkdir -p /calendar
 WORKDIR /calendar
 
 COPY --from=builder /opt/calendar ./
-RUN chmod +x /calendar/wait-for-it.sh
+COPY --from=builder /opt/script/wait-for-it.sh /usr/bin/wait-for-it.sh
+RUN chmod +x /usr/bin/wait-for-it.sh
 RUN apk update && apk add bash && apk add --no-cache coreutils
 
 EXPOSE 8888

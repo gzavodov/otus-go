@@ -37,7 +37,7 @@ services:
       - 8888
     env_file:
       - ./env/api.env
-    entrypoint: ["bash", "-c", "./wait-for-it.sh postgres:5432 -- ./api --config=config.json"]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh postgres:5432 -- ./api --config=config.json"]
     networks:
       - calendar_nw
   calendar_scheduler:
@@ -48,7 +48,7 @@ services:
     restart: on-failure
     env_file: 
       - ./env/scheduler.env
-    entrypoint: ["bash", "-c", "./wait-for-it.sh rabbitmq:15672 -- ./scheduler --config=config.json"]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- ./scheduler --config=config.json"]
     networks:
       - calendar_nw
   calendar_client:
@@ -59,6 +59,6 @@ services:
     restart: on-failure
     env_file: 
       - ./env/client.env
-    entrypoint: ["bash", "-c", "./wait-for-it.sh rabbitmq:15672 -- ./client --config=config.json"]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- ./client --config=config.json"]
     networks:
       - calendar_nw
