@@ -6,6 +6,7 @@ FROM golang:1.13 as builder
 RUN mkdir -p /opt/calendar
 WORKDIR /opt/calendar
 
+COPY ./script/wait-for-it.sh ./wait-for-it.sh
 COPY ./config/config.docker.json ./config.json
 COPY go.mod go.sum ./
 RUN go mod download
@@ -21,6 +22,7 @@ RUN mkdir -p /calendar
 WORKDIR /calendar
 
 COPY --from=builder /opt/calendar ./
+RUN chmod +x /calendar/wait-for-it.sh
 RUN apk update && apk add bash && apk add --no-cache coreutils
 
 ENTRYPOINT ["./client", "--config=config.json"]
