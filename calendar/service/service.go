@@ -95,6 +95,7 @@ func CreateService(ctx context.Context, conf *config.Configuration, logger *zap.
 		return scheduler.NewClient(
 				ctx,
 				queueChannel,
+				nil,
 				logger,
 			),
 			nil

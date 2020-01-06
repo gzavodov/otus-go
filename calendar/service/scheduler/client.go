@@ -11,19 +11,27 @@ import (
 )
 
 //NewClient creates new scheduler client
-func NewClient(ctx context.Context, channel queue.NotificationChannel, logger *zap.Logger) *Client {
-	return &Client{
+func NewClient(ctx context.Context, channel queue.NotificationChannel, receiver queue.NotificationReceiver, logger *zap.Logger) *Client {
+	client := &Client{
 		ctx:             ctx,
 		channel:         channel,
 		shutdownChannel: make(chan struct{}),
 		logger:          logger,
 	}
+
+	if receiver == nil {
+		receiver = client
+	}
+	client.receiver = receiver
+
+	return client
 }
 
 //Client event reminder service
 type Client struct {
 	ctx             context.Context
 	channel         queue.NotificationChannel
+	receiver        queue.NotificationReceiver
 	shutdownChannel chan struct{}
 	once            sync.Once
 	logger          *zap.Logger
@@ -32,6 +40,17 @@ type Client struct {
 //GetServiceName returns service name
 func (c *Client) GetServiceName() string {
 	return "Scheduler client"
+}
+
+//Receive represents implementation of queue::NotificationReceiver::Receive
+func (c *Client) Receive(notification *queue.Notification) error {
+	_, err := fmt.Fprintf(
+		os.Stdout,
+		"%s: %s\n",
+		notification.StartTime.Format("2 Jan 2006 15:04"),
+		notification.Title,
+	)
+	return err
 }
 
 //Start starts scheduler client
@@ -56,12 +75,14 @@ func (c *Client) Start() error {
 				c.LogError(ErrorCategoryChannel, err)
 				return err
 			}
-			fmt.Fprintf(
-				os.Stdout,
-				"%s: %s\n",
-				result.Notification.StartTime.Format("2 Jan 2006 15:04"),
-				result.Notification.Title,
-			)
+
+			if c.receiver != nil {
+				if err := c.receiver.Receive(result.Notification); err != nil {
+					c.LogError(ErrorCategoryReceiver, err)
+					return err
+				}
+
+			}
 		}
 	}
 }
