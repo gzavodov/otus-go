@@ -52,6 +52,7 @@ func main() {
 	appService := scheduler.NewClient(
 		context.Background(),
 		queueChannel,
+		nil,
 		appLogger,
 	)
 
