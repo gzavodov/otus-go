@@ -1,0 +1,7 @@
+{
+    "http_listen": "127.0.0.1:8888",
+    "ampq_type_id": 1,
+    "ampq_name": "calendar-notifications",
+    "ampq_address": "amqp://guest:guest@127.0.0.1:5672/",
+    "scheduler_check_interval": 60
+}
