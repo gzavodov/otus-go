@@ -4,6 +4,7 @@ import (
 	"github.com/gzavodov/otus-go/calendar/pkg/queue"
 )
 
+//NewNotificationReceiver creates new calendar event notification client
 func NewNotificationReceiver(channel chan<- *queue.Notification) *NotificationReceiver {
 	return &NotificationReceiver{channel: channel}
 }
