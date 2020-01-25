@@ -52,7 +52,7 @@ services:
     entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- /calendar/scheduler --config=config.json"]
     networks:
       - calendar_nw
-  calendar_tests:
+  calendar_test:
     build: ../calendar-test
     depends_on:
       - rabbit
