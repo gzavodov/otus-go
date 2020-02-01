@@ -10,4 +10,5 @@ type BannerRepository interface {
 	Read(int64) (*model.Banner, error)
 	Update(*model.Banner) error
 	Delete(int64) error
+	IsExists(int64) (bool, error)
 }

@@ -8,28 +8,28 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-//SlotRepository Storage interface for Banner Slot
-type SlotRepository struct {
+//BannerRepository  Storage interface for Banner
+type BannerRepository struct {
 	BaseRepository
 }
 
-//NewSlotRepository creates new SQL Slot Repository
-func NewSlotRepository(ctx context.Context, dataSourceName string) repository.SlotRepository {
+//NewBannerRepository creates new SQL Banner Repository
+func NewBannerRepository(ctx context.Context, dataSourceName string) repository.BannerRepository {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return &SlotRepository{BaseRepository{ctx: ctx, dataSourceName: dataSourceName}}
+	return &BannerRepository{BaseRepository{ctx: ctx, dataSourceName: dataSourceName}}
 }
 
-//Create creates new Banner Slot in databse
+//Create creates new Banner in databse
 //If succseed ID field will be updated
-func (r *SlotRepository) Create(m *model.Slot) error {
+func (r *BannerRepository) Create(m *model.Banner) error {
 	if m == nil {
 		return repository.NewInvalidArgumentError("first parameter must be not null pointer")
 	}
 
 	row, err := r.QueryRow(
-		`INSERT INTO banner_slot(caption) VALUES($1) RETURNING id`,
+		`INSERT INTO banner(caption) VALUES($1) RETURNING id`,
 		m.Caption,
 	)
 
@@ -45,14 +45,14 @@ func (r *SlotRepository) Create(m *model.Slot) error {
 	return nil
 }
 
-//Read reads Banner Slot from databse by ID
-func (r *SlotRepository) Read(ID int64) (*model.Slot, error) {
+//Read reads Banner from databse by ID
+func (r *BannerRepository) Read(ID int64) (*model.Banner, error) {
 	if ID <= 0 {
 		return nil, repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
 	row, err := r.QueryRow(
-		`SELECT id, caption FROM banner_slot WHERE id = $1`,
+		`SELECT id, caption FROM banner WHERE id = $1`,
 		ID,
 	)
 
@@ -60,7 +60,7 @@ func (r *SlotRepository) Read(ID int64) (*model.Slot, error) {
 		return nil, repository.NewReadingError(err, "failed to execute select query")
 	}
 
-	m := &model.Slot{}
+	m := &model.Banner{}
 	if err := row.Scan(&m.ID, &m.Caption); err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, repository.NewNotFoundError("failed to find record with ID: %d", ID)
@@ -72,8 +72,8 @@ func (r *SlotRepository) Read(ID int64) (*model.Slot, error) {
 	return m, nil
 }
 
-//Update modifies Banner Slot in databse
-func (r *SlotRepository) Update(m *model.Slot) error {
+//Update modifies Banner in databse
+func (r *BannerRepository) Update(m *model.Banner) error {
 	if m == nil {
 		return repository.NewInvalidArgumentError("first parameter must be not null pointer")
 	}
@@ -84,7 +84,7 @@ func (r *SlotRepository) Update(m *model.Slot) error {
 	}
 
 	result, err := r.Execute(
-		`UPDATE banner_slot SET caption = $1 WHERE id = $2`,
+		`UPDATE banner SET caption = $1 WHERE id = $2`,
 		m.Caption,
 		ID,
 	)
@@ -99,13 +99,13 @@ func (r *SlotRepository) Update(m *model.Slot) error {
 	return nil
 }
 
-//Delete removes Banner Slot from databse
-func (r *SlotRepository) Delete(ID int64) error {
+//Delete removes Banner from databse
+func (r *BannerRepository) Delete(ID int64) error {
 	if ID <= 0 {
 		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	result, err := r.Execute(`DELETE FROM banner_slot WHERE id = $1`, ID)
+	result, err := r.Execute(`DELETE FROM banner WHERE id = $1`, ID)
 	if err != nil {
 		return repository.NewDeletionError(err, "failed to execute delete query for record with ID: %d", ID)
 	}
@@ -117,12 +117,12 @@ func (r *SlotRepository) Delete(ID int64) error {
 }
 
 //IsExists check if repository contains banner with specified ID
-func (r *SlotRepository) IsExists(ID int64) (bool, error) {
+func (r *BannerRepository) IsExists(ID int64) (bool, error) {
 	if ID <= 0 {
 		return false, repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	row, err := r.QueryRow(`SELECT 'x' FROM banner_slot WHERE id = $1`, ID)
+	row, err := r.QueryRow(`SELECT 'x' FROM banner WHERE id = $1`, ID)
 	if err != nil {
 		return false, repository.NewReadingError(err, "failed to execute select query")
 	}

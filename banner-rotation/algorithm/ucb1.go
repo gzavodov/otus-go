@@ -6,20 +6,14 @@ import (
 )
 
 //NewUCB1 creates new multi-armed bandit based on UCB1 algorithm
-func NewUCB1(counts []uint32, rewards []float64) (*UCB1, error) {
-	if len(counts) != len(rewards) {
-		return nil, ErrorInvalidLength
-	}
-
-	return &UCB1{Counts: counts, Rewards: rewards, mu: sync.RWMutex{}}, nil
+func NewUCB1(statisticsList []Statistics) (*UCB1, error) {
+	return &UCB1{StatisticsList: statisticsList, mu: sync.RWMutex{}}, nil
 }
 
 //UCB1 represents implementation of the upper confidence bound algorithm
 type UCB1 struct {
-	Counts  []uint32
-	Rewards []float64
-
-	mu sync.RWMutex
+	StatisticsList []Statistics
+	mu             sync.RWMutex
 }
 
 //Initialize will initialize the counts and rewards with the specified number of arms
@@ -31,9 +25,7 @@ func (b *UCB1) Initialize(armCount int) error {
 		return ErrorInvalidArmCount
 	}
 
-	b.Counts = make([]uint32, armCount)
-	b.Rewards = make([]float64, armCount)
-
+	b.StatisticsList = make([]Statistics, armCount)
 	return nil
 }
 
@@ -42,18 +34,26 @@ func (b *UCB1) ResolveArmIndex() int {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	armCount := len(b.Counts)
-	for i := 0; i < armCount; i++ {
-		if b.Counts[i] == 0 {
+	quantity := len(b.StatisticsList)
+
+	counts := make([]int64, quantity)
+	rewards := make([]float64, quantity)
+
+	for i := 0; i < quantity; i++ {
+		stat := b.StatisticsList[i]
+		if stat.GetCount() == 0 {
 			return i
 		}
+
+		counts[i] = stat.GetCount()
+		rewards[i] = stat.GetReward()
 	}
 
-	values := make([]float64, armCount)
-	numerator := 2.0 * math.Log(float64(sum(b.Counts)))
-	for i := 0; i < armCount; i++ {
-		denominator := float64(b.Counts[i])
-		values[i] = b.Rewards[i] + math.Sqrt(numerator/denominator)
+	values := make([]float64, quantity)
+	numerator := 2.0 * math.Log(float64(sum(counts)))
+	for i := 0; i < quantity; i++ {
+		denominator := float64(counts[i])
+		values[i] = rewards[i] + math.Sqrt(numerator/denominator)
 	}
 
 	return maxIndex(values)
@@ -65,7 +65,7 @@ func (b *UCB1) RegisterArmReward(armIndex int, reward float64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if armIndex < 0 || armIndex >= len(b.Rewards) {
+	if armIndex < 0 || armIndex >= len(b.StatisticsList) {
 		return ErrorArmIndexOutOfRange
 	}
 
@@ -73,23 +73,26 @@ func (b *UCB1) RegisterArmReward(armIndex int, reward float64) error {
 		return ErrorInvalidReward
 	}
 
-	currentCount := float64(b.Counts[armIndex])
-	currentReward := b.Rewards[armIndex]
+	currentCount := b.StatisticsList[armIndex].GetCount()
+	currentReward := b.StatisticsList[armIndex].GetReward()
 
-	b.Counts[armIndex]++
-	b.Rewards[armIndex] = (currentReward*currentCount + reward) / (currentCount + 1)
+	b.StatisticsList[armIndex].SetCount(currentCount + 1)
+	b.StatisticsList[armIndex].SetReward((currentReward*float64(currentCount) + reward) / float64(currentCount+1))
 
 	return nil
 }
 
 //GetCounts returns the counts
-func (b *UCB1) GetCounts() []uint32 {
+func (b *UCB1) GetCounts() []int64 {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	result := make([]uint32, len(b.Counts))
-	copy(result, b.Counts)
-	return result
+	quantity := len(b.StatisticsList)
+	counts := make([]int64, quantity)
+	for i := 0; i < quantity; i++ {
+		counts[i] = b.StatisticsList[i].GetCount()
+	}
+	return counts
 }
 
 //GetRewards returns the rewards
@@ -97,7 +100,10 @@ func (b *UCB1) GetRewards() []float64 {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	result := make([]float64, len(b.Rewards))
-	copy(result, b.Rewards)
-	return result
+	quantity := len(b.StatisticsList)
+	rewards := make([]float64, quantity)
+	for i := 0; i < quantity; i++ {
+		rewards[i] = b.StatisticsList[i].GetReward()
+	}
+	return rewards
 }

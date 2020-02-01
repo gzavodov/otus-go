@@ -14,7 +14,7 @@ type GroupRepository struct {
 }
 
 //NewGroupRepository creates new SQL Group Repository
-func NewGroupRepository(ctx context.Context, dataSourceName string) *GroupRepository {
+func NewGroupRepository(ctx context.Context, dataSourceName string) repository.GroupRepository {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -28,19 +28,18 @@ func (r *GroupRepository) Create(m *model.Group) error {
 		return repository.NewInvalidArgumentError("first parameter must be not null pointer")
 	}
 
-	if err := r.Connect(); err != nil {
-		return err
-	}
-
-	row := r.conn.QueryRow(
-		r.ctx,
-		`INSERT INTO group(caption) VALUES($1) RETURNING id`,
+	row, err := r.QueryRow(
+		`INSERT INTO banner_group(caption) VALUES($1) RETURNING id`,
 		m.Caption,
 	)
 
+	if err != nil {
+		return repository.NewCreationError(err, "failed to execute insert query")
+	}
+
 	//sql.Row.Scan will close underlying sql.Row before exit
 	if err := row.Scan(&m.ID); err != nil {
-		return repository.NewCreationError(err, "failed to execute insert query")
+		return repository.NewCreationError(err, "failed to fetch query result")
 	}
 
 	return nil
@@ -52,24 +51,22 @@ func (r *GroupRepository) Read(ID int64) (*model.Group, error) {
 		return nil, repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	if err := r.Connect(); err != nil {
-		return nil, err
-	}
-
-	row := r.conn.QueryRow(
-		r.ctx,
-		`SELECT id, caption FROM group WHERE id = $1`,
+	row, err := r.QueryRow(
+		`SELECT id, caption FROM banner_group WHERE id = $1`,
 		ID,
 	)
 
-	m := &model.Group{}
-	err := row.Scan(&m.ID, &m.Caption)
 	if err != nil {
+		return nil, repository.NewReadingError(err, "failed to execute select query")
+	}
+
+	m := &model.Group{}
+	if err := row.Scan(&m.ID, &m.Caption); err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, repository.NewNotFoundError("failed to find record with ID: %d", ID)
 		}
 
-		return nil, repository.NewReadingError(err, "failed to read record with ID: %d", ID)
+		return nil, repository.NewReadingError(err, "failed to fetch query result")
 	}
 
 	return m, nil
@@ -86,13 +83,8 @@ func (r *GroupRepository) Update(m *model.Group) error {
 		return repository.NewInvalidArgumentError("model ID must be greater than zero")
 	}
 
-	if err := r.Connect(); err != nil {
-		return err
-	}
-
-	res, err := r.conn.Exec(
-		r.ctx,
-		`UPDATE group SET caption = $1 WHERE id = $2`,
+	result, err := r.Execute(
+		`UPDATE banner_group SET caption = $1 WHERE id = $2`,
 		m.Caption,
 		ID,
 	)
@@ -101,7 +93,7 @@ func (r *GroupRepository) Update(m *model.Group) error {
 		return repository.NewUpdatingError(err, "failed to execute update query for record with ID: %d", ID)
 	}
 
-	if res.RowsAffected() == 0 {
+	if !result {
 		return repository.NewNotFoundError("failed to find record with ID: %d", ID)
 	}
 	return nil
@@ -113,17 +105,36 @@ func (r *GroupRepository) Delete(ID int64) error {
 		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	if err := r.Connect(); err != nil {
-		return err
-	}
-
-	res, err := r.conn.Exec(r.ctx, `DELETE FROM group WHERE id = $1`, ID)
+	result, err := r.Execute(`DELETE FROM banner_group WHERE id = $1`, ID)
 	if err != nil {
 		return repository.NewDeletionError(err, "failed to execute delete query for record with ID: %d", ID)
 	}
 
-	if res.RowsAffected() == 0 {
+	if !result {
 		return repository.NewNotFoundError("failed to find record with ID: %d", ID)
 	}
 	return nil
+}
+
+//IsExists check if repository contains banner with specified ID
+func (r *GroupRepository) IsExists(ID int64) (bool, error) {
+	if ID <= 0 {
+		return false, repository.NewInvalidArgumentError("first parameter must be greater than zero")
+	}
+
+	row, err := r.QueryRow(`SELECT 'x' FROM banner_group WHERE id = $1`, ID)
+	if err != nil {
+		return false, repository.NewReadingError(err, "failed to execute select query")
+	}
+
+	s := ""
+	if err := row.Scan(&s); err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+
+		return false, repository.NewReadingError(err, "failed to fetch query result")
+	}
+
+	return true, nil
 }

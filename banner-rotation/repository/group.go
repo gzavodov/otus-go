@@ -10,4 +10,5 @@ type GroupRepository interface {
 	Read(int64) (*model.Group, error)
 	Update(*model.Group) error
 	Delete(int64) error
+	IsExists(int64) (bool, error)
 }

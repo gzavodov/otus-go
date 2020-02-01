@@ -10,4 +10,5 @@ type SlotRepository interface {
 	Read(int64) (*model.Slot, error)
 	Update(*model.Slot) error
 	Delete(int64) error
+	IsExists(int64) (bool, error)
 }

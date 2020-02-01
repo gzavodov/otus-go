@@ -59,3 +59,35 @@ func (r *BaseRepository) Connect() error {
 
 	return nil
 }
+
+//QueryRow is a wrapper over pgx QueryRow
+func (r *BaseRepository) QueryRow(query string, params ...interface{}) (pgx.Row, error) {
+	if err := r.Connect(); err != nil {
+		return nil, err
+	}
+
+	return r.conn.QueryRow(r.ctx, query, params...), nil
+}
+
+//Query is a wrapper over pgx Query
+func (r *BaseRepository) Query(query string, params ...interface{}) (pgx.Rows, error) {
+	if err := r.Connect(); err != nil {
+		return nil, err
+	}
+
+	return r.conn.Query(r.ctx, query, params...)
+}
+
+//Execute is a wrapper over pgx Exec
+func (r *BaseRepository) Execute(query string, params ...interface{}) (bool, error) {
+	if err := r.Connect(); err != nil {
+		return false, err
+	}
+
+	res, err := r.conn.Exec(r.ctx, query, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return res.RowsAffected() > 0, nil
+}

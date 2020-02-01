@@ -69,7 +69,10 @@ func WrapError(code int, err error) error {
 
 //WrapErrorf creates a new repository with wrapped error and formatted message
 func WrapErrorf(code int, err error, msg string, args ...interface{}) *Error {
-	return &Error{code: code, innerErr: fmt.Errorf("%s: underlying error (%w)", fmt.Sprintf(msg, args...), err)}
+	if err != nil {
+		return &Error{code: code, innerErr: fmt.Errorf("%s: underlying error (%w)", fmt.Sprintf(msg, args...), err)}
+	}
+	return &Error{code: code, innerErr: fmt.Errorf(msg, args...)}
 }
 
 //Error represents custom repository error

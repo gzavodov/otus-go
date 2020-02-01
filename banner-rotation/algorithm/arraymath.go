@@ -2,8 +2,8 @@ package algorithm
 
 import "math"
 
-func sum(values []uint32) uint32 {
-	var total uint32
+func sum(values []int64) int64 {
+	var total int64
 
 	for _, v := range values {
 		total += v
