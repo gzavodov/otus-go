@@ -176,6 +176,38 @@ func (r *BindingRepository) DeleteByModel(m *model.Binding) error {
 	return nil
 }
 
+//GetBinding returns binding associated with specified banner and slot
+func (r *BindingRepository) GetBinding(bannerID int64, slotID int64) (*model.Binding, error) {
+	if bannerID <= 0 {
+		return nil, repository.NewInvalidArgumentError("first parameter must be greater than zero")
+	}
+
+	if slotID <= 0 {
+		return nil, repository.NewInvalidArgumentError("second parameter must be greater than zero")
+	}
+
+	row, err := r.QueryRow(
+		`SELECT id, banner_id, slot_id FROM banner_binding WHERE banner_id = $1 AND slot_id = $2`,
+		bannerID,
+		slotID,
+	)
+
+	if err != nil {
+		return nil, repository.NewReadingError(err, "failed to execute select query")
+	}
+
+	m := &model.Binding{}
+	if err := row.Scan(&m.ID, &m.BannerID, &m.SlotID); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, repository.NewReadingError(err, "failed to fetch query result")
+	}
+
+	return m, nil
+}
+
 //GetBannerBindings returns bindings associated with banner specified by bannerID
 func (r *BindingRepository) GetBannerBindings(bannerID int64) ([]*model.Binding, error) {
 	if bannerID <= 0 {

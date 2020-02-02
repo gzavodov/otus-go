@@ -17,6 +17,7 @@ type BindingRepository interface {
 
 	IsExists(int64) (bool, error)
 
+	GetBinding(bannerID int64, slotID int64) (*model.Binding, error)
 	GetBannerBindings(bannerID int64) ([]*model.Binding, error)
 	GetSlotBindings(slotID int64) ([]*model.Binding, error)
 }
