@@ -18,5 +18,6 @@ type StatisticsRepository interface {
 	GetGroupStatistics(int64) ([]*model.Statistics, error)
 	GetRotationStatistics(int64, int64) ([]*model.Statistics, error)
 
+	IncrementNumberOfShows(int64, int64) error
 	IncrementNumberOfClicks(int64, int64) error
 }

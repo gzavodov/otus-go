@@ -14,16 +14,14 @@ func NewServer(
 	address string,
 	bannerUsecase *usecase.Banner,
 	slotUsecase *usecase.Slot,
-	bindingUsecase *usecase.Binding,
 	groupUsecase *usecase.Group,
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
-		Server:         endpoint.Server{Name: "REST", Address: address, Logger: logger},
-		bannerUsecase:  bannerUsecase,
-		slotUsecase:    slotUsecase,
-		bindingUsecase: bindingUsecase,
-		groupUsecase:   groupUsecase,
+		Server:        endpoint.Server{Name: "REST", Address: address, Logger: logger},
+		bannerUsecase: bannerUsecase,
+		slotUsecase:   slotUsecase,
+		groupUsecase:  groupUsecase,
 	}
 }
 
@@ -36,9 +34,6 @@ type Server struct {
 
 	slotHandler *Slot
 	slotUsecase *usecase.Slot
-
-	bindingHandler *Binding
-	bindingUsecase *usecase.Binding
 
 	groupHandler *Group
 	groupUsecase *usecase.Group
@@ -80,19 +75,6 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/slot/read", s.slotHandler.Read)
 	serverMux.HandleFunc("/slot/update", s.slotHandler.Update)
 	serverMux.HandleFunc("/slot/delete", s.slotHandler.Delete)
-
-	s.bindingHandler = &Binding{
-		Handler: endpoint.Handler{
-			Name:        "Binding",
-			ServiceName: s.Name,
-			Logger:      s.Logger,
-		},
-		ucase: s.bindingUsecase,
-	}
-	serverMux.HandleFunc("/binding/create", s.bindingHandler.Create)
-	serverMux.HandleFunc("/binding/read", s.bindingHandler.Read)
-	serverMux.HandleFunc("/binding/update", s.bindingHandler.Update)
-	serverMux.HandleFunc("/binding/delete", s.bindingHandler.Delete)
 
 	s.groupHandler = &Group{
 		Handler: endpoint.Handler{

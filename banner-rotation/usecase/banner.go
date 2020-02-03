@@ -93,15 +93,19 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 		adapters[i] = NewStatisticsAdapter(statisticsList[i])
 	}
 
-	bandit, err := algorithm.NewUCB1(adapters)
+	alg, err := algorithm.NewUCB1(adapters)
 	if err != nil {
 		return -1, err
 	}
 
-	index := bandit.ResolveArmIndex()
-	if index >= 0 {
-		return statisticsList[index].BannerID, nil
+	index := alg.ResolveArmIndex()
+	if index < 0 {
+		return 0, nil
 	}
 
-	return 0, nil
+	bannerID := statisticsList[index].BannerID
+	if err := c.statisticsRepo.IncrementNumberOfShows(bannerID, groupID); err != nil {
+		return -1, err
+	}
+	return bannerID, nil
 }

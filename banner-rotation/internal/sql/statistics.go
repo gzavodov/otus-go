@@ -251,6 +251,28 @@ func (r *StatisticsRepository) GetRotationStatistics(slotID int64, groupID int64
 	return list, nil
 }
 
+//IncrementNumberOfShows increases Number Of Shows of statistics specified by bannerID and groupID
+func (r *StatisticsRepository) IncrementNumberOfShows(bannerID int64, groupID int64) error {
+	if bannerID <= 0 {
+		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
+	}
+
+	if groupID <= 0 {
+		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
+	}
+
+	result, err := r.Execute(`UPDATE banner_statistics SET number_of_shows = (number_of_shows + 1) WHERE banner_id = $1 AND group_id = $2`, bannerID, groupID)
+	if err != nil {
+		return repository.NewDeletionError(err, "failed to execute update query for record with bannerID: %d and groupID: %d", bannerID, groupID)
+	}
+
+	if !result {
+		return repository.NewNotFoundError("failed to find record with bannerID: %d and groupID: %d", bannerID, groupID)
+	}
+
+	return nil
+}
+
 //IncrementNumberOfClicks increases Number Of Clicks of statistics specified by bannerID and groupID
 func (r *StatisticsRepository) IncrementNumberOfClicks(bannerID int64, groupID int64) error {
 	if bannerID <= 0 {

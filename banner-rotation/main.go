@@ -51,7 +51,6 @@ func main() {
 		conf.HTTPAddress,
 		usecase.NewBannerUsecase(bannerRepo, bindingRepo, statisticsRepo),
 		usecase.NewSlotUsecase(slotRepo),
-		usecase.NewBindingUsecase(bindingRepo),
 		usecase.NewGroupUsecase(groupRepo),
 		appLogger,
 	)
