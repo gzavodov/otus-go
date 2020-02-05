@@ -34,6 +34,6 @@ func TestUCB1Coverage(t *testing.T) {
 	}
 
 	if omittedCount > 0 {
-		t.Fatal(fmt.Errorf("expected that all items must be selected after first pass, but received unselected items: %d", omittedCount))
+		t.Fatal(fmt.Errorf("is expected that all items will be touched after first pass, but %d item(s) are untouched", omittedCount))
 	}
 }
