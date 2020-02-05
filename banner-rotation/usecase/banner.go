@@ -10,18 +10,21 @@ func NewBannerUsecase(
 	bannerRepo repository.BannerRepository,
 	bindingRepo repository.BindingRepository,
 	statisticsRepo repository.StatisticsRepository,
+	algorithmTypeID int,
 ) *Banner {
 	return &Banner{
-		bannerRepo:     bannerRepo,
-		bindingRepo:    bindingRepo,
-		statisticsRepo: statisticsRepo,
+		bannerRepo:      bannerRepo,
+		bindingRepo:     bindingRepo,
+		statisticsRepo:  statisticsRepo,
+		algorithmTypeID: algorithmTypeID,
 	}
 }
 
 type Banner struct {
-	bannerRepo     repository.BannerRepository
-	bindingRepo    repository.BindingRepository
-	statisticsRepo repository.StatisticsRepository
+	bannerRepo      repository.BannerRepository
+	bindingRepo     repository.BindingRepository
+	statisticsRepo  repository.StatisticsRepository
+	algorithmTypeID int
 }
 
 func (c *Banner) Create(m *model.Banner) error {
@@ -93,7 +96,7 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 		adapters[i] = NewStatisticsAdapter(statisticsList[i])
 	}
 
-	alg, err := algorithm.NewUCB1(adapters)
+	alg, err := algorithm.CreateMultiArmedBandit(c.algorithmTypeID, adapters)
 	if err != nil {
 		return -1, err
 	}

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/gzavodov/otus-go/banner-rotation/algorithm"
 	"github.com/gzavodov/otus-go/banner-rotation/config"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/sql"
 	"github.com/gzavodov/otus-go/banner-rotation/logger"
@@ -25,8 +26,9 @@ func main() {
 	err := conf.Load(
 		*configFilePath,
 		&config.Configuration{
-			LogFilePath: "stderr",
-			LogLevel:    "debug",
+			AlgorithmTypeID: algorithm.TypeUCB1,
+			LogFilePath:     "stderr",
+			LogLevel:        "debug",
 		},
 	)
 	if err != nil {
@@ -49,7 +51,7 @@ func main() {
 
 	appService := rest.NewServer(
 		conf.HTTPAddress,
-		usecase.NewBannerUsecase(bannerRepo, bindingRepo, statisticsRepo),
+		usecase.NewBannerUsecase(bannerRepo, bindingRepo, statisticsRepo, conf.AlgorithmTypeID),
 		usecase.NewSlotUsecase(slotRepo),
 		usecase.NewGroupUsecase(groupRepo),
 		appLogger,

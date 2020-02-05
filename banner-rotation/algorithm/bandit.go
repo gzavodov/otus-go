@@ -18,6 +18,6 @@ type MultiArmedBandit interface {
 	Initialize(armCount int) error
 	ResolveArmIndex() int
 	RegisterArmReward(armIndex int, reward float64) error
-	GetCounts() []uint32
+	GetCounts() []int64
 	GetRewards() []float64
 }

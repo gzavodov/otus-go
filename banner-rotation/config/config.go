@@ -19,6 +19,8 @@ type Configuration struct {
 
 	RepositoryDSN string `json:"repository_dsn"`
 
+	AlgorithmTypeID int `json:"algorithm_type_id"`
+
 	AMPQTypeID  int    `json:"ampq_type_id"`
 	AMPQName    string `json:"ampq_name"`
 	AMPQAddress string `json:"ampq_address"`
@@ -50,6 +52,10 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 
 		if c.RepositoryDSN == "" {
 			c.RepositoryDSN = defaultVal.RepositoryDSN
+		}
+
+		if c.AlgorithmTypeID <= 0 {
+			c.AMPQTypeID = defaultVal.AlgorithmTypeID
 		}
 
 		if c.AMPQTypeID <= 0 {
@@ -92,6 +98,15 @@ func (c *Configuration) LoadFromEvironment() error {
 	//Repository
 	if s, ok := os.LookupEnv("BANNER_ROTATION_REPOSITORY_DSN"); ok {
 		c.RepositoryDSN = s
+	}
+
+	//Algorithm
+	if s, ok := os.LookupEnv("ALGORITHM_TYPE_ID"); ok {
+		result, err := strconv.ParseInt(s, 10, 32)
+		if err != nil {
+			return fmt.Errorf("Could not parse ALGORITHM_TYPE_ID variable: %w", err)
+		}
+		c.AlgorithmTypeID = int(result)
 	}
 
 	//AMPQ
