@@ -16,19 +16,6 @@ type UCB1 struct {
 	mu             sync.RWMutex
 }
 
-//Initialize will initialize the counts and rewards with the specified number of arms
-func (b *UCB1) Initialize(armCount int) error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	if armCount < 1 {
-		return ErrorInvalidArmCount
-	}
-
-	b.StatisticsList = make([]Statistics, armCount)
-	return nil
-}
-
 //ResolveArmIndex resolves an arm index that exploits if the value is more than the epsilon threshold, and explore if the value is less than epsilon
 func (b *UCB1) ResolveArmIndex() int {
 	b.mu.RLock()

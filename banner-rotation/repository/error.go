@@ -75,6 +75,15 @@ func WrapErrorf(code int, err error, msg string, args ...interface{}) *Error {
 	return &Error{code: code, innerErr: fmt.Errorf(msg, args...)}
 }
 
+func IsNotFoundError(err error) bool {
+	e, ok := err.(*Error)
+	if !ok {
+		return false
+	}
+
+	return e.GetCode() == ErrorNotFound
+}
+
 //Error represents custom repository error
 type Error struct {
 	code     int

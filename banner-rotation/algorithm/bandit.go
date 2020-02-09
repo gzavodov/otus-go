@@ -15,7 +15,6 @@ var (
 
 //MultiArmedBandit represents the multi-armed bandit interface
 type MultiArmedBandit interface {
-	Initialize(armCount int) error
 	ResolveArmIndex() int
 	RegisterArmReward(armIndex int, reward float64) error
 	GetCounts() []int64
