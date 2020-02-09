@@ -29,13 +29,14 @@ type Configuration struct {
 //Load read configuration from file anf from os environment variables
 func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 	if len(filePath) > 0 {
-		err := c.LoadFromFile(filePath)
-		if err != nil {
+		if err := c.LoadFromFile(filePath); err != nil {
 			return err
 		}
 	}
 
-	c.LoadFromEvironment()
+	if err := c.LoadFromEvironment(); err != nil {
+		return err
+	}
 
 	if defaultVal != nil {
 		if c.HTTPAddress == "" {

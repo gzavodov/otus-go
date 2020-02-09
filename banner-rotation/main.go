@@ -37,9 +37,13 @@ func main() {
 
 	appLogger, err := logger.Create(conf.LogFilePath, conf.LogLevel)
 	if err != nil {
-		log.Fatalf("Could not initialize zap logger: %v", err)
+		log.Fatalf("Could not initialize logger: %v", err)
 	}
-	defer appLogger.Sync()
+	defer func() {
+		if err := appLogger.Sync(); err != nil {
+			log.Fatalf("Could not flush logger write buffers: %v", err)
+		}
+	}()
 
 	appContext := context.Background()
 
