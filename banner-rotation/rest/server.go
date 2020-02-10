@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gzavodov/otus-go/banner-rotation/queue"
+
 	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 	"go.uber.org/zap"
@@ -12,16 +14,21 @@ import (
 //NewServer Creates new Web server
 func NewServer(
 	address string,
+
 	bannerUsecase *usecase.Banner,
 	slotUsecase *usecase.Slot,
 	groupUsecase *usecase.Group,
+
+	notificationChannel queue.NotificationChannel,
+
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
-		Server:        endpoint.Server{Name: "REST", Address: address, Logger: logger},
-		bannerUsecase: bannerUsecase,
-		slotUsecase:   slotUsecase,
-		groupUsecase:  groupUsecase,
+		Server:              endpoint.Server{Name: "REST", Address: address, Logger: logger},
+		bannerUsecase:       bannerUsecase,
+		slotUsecase:         slotUsecase,
+		groupUsecase:        groupUsecase,
+		notificationChannel: notificationChannel,
 	}
 }
 
@@ -38,6 +45,8 @@ type Server struct {
 	groupHandler *Group
 	groupUsecase *usecase.Group
 
+	notificationChannel queue.NotificationChannel
+
 	endpoint.Server
 }
 
@@ -47,9 +56,10 @@ func (s *Server) Start() error {
 
 	s.bannerHandler = &Banner{
 		Handler: endpoint.Handler{
-			Name:        "Banner",
-			ServiceName: s.Name,
-			Logger:      s.Logger,
+			Name:                "Banner",
+			ServiceName:         s.Name,
+			Logger:              s.Logger,
+			NotificationChannel: s.notificationChannel,
 		},
 		ucase: s.bannerUsecase,
 	}
@@ -65,9 +75,10 @@ func (s *Server) Start() error {
 
 	s.slotHandler = &Slot{
 		Handler: endpoint.Handler{
-			Name:        "Slot",
-			ServiceName: s.Name,
-			Logger:      s.Logger,
+			Name:                "Slot",
+			ServiceName:         s.Name,
+			Logger:              s.Logger,
+			NotificationChannel: s.notificationChannel,
 		},
 		ucase: s.slotUsecase,
 	}
@@ -78,9 +89,10 @@ func (s *Server) Start() error {
 
 	s.groupHandler = &Group{
 		Handler: endpoint.Handler{
-			Name:        "Group",
-			ServiceName: s.Name,
-			Logger:      s.Logger,
+			Name:                "Group",
+			ServiceName:         s.Name,
+			Logger:              s.Logger,
+			NotificationChannel: s.notificationChannel,
 		},
 		ucase: s.groupUsecase,
 	}

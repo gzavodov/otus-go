@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gzavodov/otus-go/banner-rotation/queue"
 	"go.uber.org/zap"
 )
 
@@ -20,9 +21,10 @@ type Result struct {
 
 //Handler base struct for end point service action handler
 type Handler struct {
-	Name        string
-	ServiceName string
-	Logger      *zap.Logger
+	Name                string
+	ServiceName         string
+	NotificationChannel queue.NotificationChannel
+	Logger              *zap.Logger
 }
 
 //GetQualifiedName return handler qualified name (used in logging proccess)
@@ -60,6 +62,13 @@ func (h *Handler) WriteResult(w http.ResponseWriter, result interface{}) error {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(output)
+	if _, err := w.Write(output); err != nil {
+		return fmt.Errorf("could not write event result (%w)", err)
+	}
 	return nil
+}
+
+//Notify send notification
+func (h *Handler) Notify(notification *queue.Notification) error {
+	return h.NotificationChannel.Write(notification)
 }

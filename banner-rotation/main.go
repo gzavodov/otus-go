@@ -7,6 +7,7 @@ import (
 
 	"github.com/gzavodov/otus-go/banner-rotation/algorithm"
 	"github.com/gzavodov/otus-go/banner-rotation/config"
+	"github.com/gzavodov/otus-go/banner-rotation/internal/rabbitmq"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/sql"
 	"github.com/gzavodov/otus-go/banner-rotation/logger"
 	"github.com/gzavodov/otus-go/banner-rotation/rest"
@@ -58,6 +59,7 @@ func main() {
 		usecase.NewBannerUsecase(bannerRepo, bindingRepo, statisticsRepo, conf.AlgorithmTypeID),
 		usecase.NewSlotUsecase(slotRepo),
 		usecase.NewGroupUsecase(groupRepo),
+		rabbitmq.NewChannel(appContext, conf.AMPQName, conf.AMPQAddress),
 		appLogger,
 	)
 

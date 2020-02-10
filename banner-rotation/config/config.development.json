@@ -2,6 +2,8 @@
     "http_listen": "127.0.0.1:8080",
     "log_file": "log.json",
     "log_level": "debug",
+    "algorithm_type_id": 1,
     "repository_dsn": "user= password= host=127.0.0.1 port=5432 sslmode=disable",
-    "algorithm_type_id": 1
+    "ampq_name": "banner-rotation-notifications",
+    "ampq_address": "amqp://guest:guest@0.0.0.0:5672/"
 }

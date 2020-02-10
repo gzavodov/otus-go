@@ -3,8 +3,10 @@ package rest
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
+	"github.com/gzavodov/otus-go/banner-rotation/queue"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 )
 
@@ -286,6 +288,17 @@ func (h *Banner) RegisterClick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	notification := queue.Notification{
+		EventType: queue.EventClick,
+		BannerID:  bannerID,
+		GroupID:   groupID,
+		Time:      time.Now().UTC(),
+	}
+
+	if err := h.Notify(&notification); err != nil {
+		h.LogError("Notification", err)
+	}
+
 	result := endpoint.Result{Result: "OK"}
 	if err = h.WriteResult(w, result); err != nil {
 		h.LogError("Response writing", err)
@@ -324,6 +337,17 @@ func (h *Banner) Choose(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
+	}
+
+	notification := queue.Notification{
+		EventType: queue.EventChoice,
+		BannerID:  ID,
+		GroupID:   groupID,
+		Time:      time.Now().UTC(),
+	}
+
+	if err := h.Notify(&notification); err != nil {
+		h.LogError("Notification", err)
 	}
 
 	result := endpoint.Result{Result: ID}

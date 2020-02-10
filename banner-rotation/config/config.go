@@ -17,11 +17,10 @@ type Configuration struct {
 	LogFilePath string `json:"log_file"`
 	LogLevel    string `json:"log_level"`
 
-	RepositoryDSN string `json:"repository_dsn"`
-
 	AlgorithmTypeID int `json:"algorithm_type_id"`
 
-	AMPQTypeID  int    `json:"ampq_type_id"`
+	RepositoryDSN string `json:"repository_dsn"`
+
 	AMPQName    string `json:"ampq_name"`
 	AMPQAddress string `json:"ampq_address"`
 }
@@ -53,14 +52,6 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 
 		if c.RepositoryDSN == "" {
 			c.RepositoryDSN = defaultVal.RepositoryDSN
-		}
-
-		if c.AlgorithmTypeID <= 0 {
-			c.AMPQTypeID = defaultVal.AlgorithmTypeID
-		}
-
-		if c.AMPQTypeID <= 0 {
-			c.AMPQTypeID = defaultVal.AMPQTypeID
 		}
 
 		if c.AMPQName == "" {
@@ -111,14 +102,6 @@ func (c *Configuration) LoadFromEvironment() error {
 	}
 
 	//AMPQ
-	if s, ok := os.LookupEnv("AMPQ_TYPE_ID"); ok {
-		result, err := strconv.ParseInt(s, 10, 32)
-		if err != nil {
-			return fmt.Errorf("Could not parse AMPQ_TYPE_ID variable: %w", err)
-		}
-		c.AMPQTypeID = int(result)
-	}
-
 	if s, ok := os.LookupEnv("AMPQ_NAME"); ok {
 		c.AMPQName = s
 	}
