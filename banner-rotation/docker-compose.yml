@@ -1,0 +1,47 @@
+version: "3"
+networks:
+  banner_rotation_nw:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:12.1
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    env_file:
+      - ./env/db.env
+    volumes:
+      - ./db/migration/banner.sql:/docker-entrypoint-initdb.d/1_banner.sql
+      - ./db/migration/binding.sql:/docker-entrypoint-initdb.d/2_binding.sql
+      - ./db/migration/group.sql:/docker-entrypoint-initdb.d/3_group.sql
+      - ./db/migration/slot.sql:/docker-entrypoint-initdb.d/4_slot.sql
+      - ./db/migration/statistics.sql:/docker-entrypoint-initdb.d/5_statistics.sql
+    networks:
+      - banner_rotation_nw
+  rabbit:
+    image: rabbitmq:3.7-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    expose:
+      - 15672
+      - 5672
+    networks:
+      - banner_rotation_nw
+  banner_rotation_api:
+    build: ./
+    depends_on:
+      - postgres
+      - rabbit
+    restart: on-failure
+    ports:
+      - 8390:8390
+    expose:
+      - 8390
+    env_file:
+      - ./env/api.env
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- /banner-rotation/app --config=config.json"]
+    networks:
+      - banner_rotation_nw

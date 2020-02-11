@@ -1,5 +1,5 @@
 {
-    "http_listen": "127.0.0.1:8080",
+    "http_listen": "127.0.0.1:80",
     "log_file": "log.json",
     "log_level": "debug",
     "algorithm_type_id": 1,
