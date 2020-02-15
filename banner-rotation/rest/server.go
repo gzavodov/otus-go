@@ -111,8 +111,10 @@ func (s *Server) Start() error {
 }
 
 //Stop stop handling of Web requests
-func (s *Server) Stop() {
+func (s *Server) Stop() error {
 	if s.server != nil {
-		s.server.Shutdown(context.Background())
+		return s.server.Shutdown(context.Background())
 	}
+
+	return nil
 }
