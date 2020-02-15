@@ -27,6 +27,7 @@ func (h *Banner) Create(w http.ResponseWriter, r *http.Request) {
 
 	form := RequestForm{Request: r}
 	m, err := form.ParseBanner()
+
 	if err != nil {
 		h.LogError("Request parsing", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -35,15 +36,11 @@ func (h *Banner) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.ucase.Create(m); err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	result := endpoint.Result{Result: m}
-	if err = h.WriteResult(w, result); err != nil {
+	if err = h.WriteResult(w, m); err != nil {
 		h.LogError("Response writing", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -76,15 +73,11 @@ func (h *Banner) Read(w http.ResponseWriter, r *http.Request) {
 	m, err := h.ucase.Read(ID)
 	if err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	result := endpoint.Result{Result: m}
-	if err = h.WriteResult(w, result); err != nil {
+	if err = h.WriteResult(w, m); err != nil {
 		h.LogError("Response writing", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -125,15 +118,11 @@ func (h *Banner) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.ucase.Update(m); err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	result := endpoint.Result{Result: m}
-	if err = h.WriteResult(w, &result); err != nil {
+	if err = h.WriteResult(w, m); err != nil {
 		h.LogError("Response writing", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -165,18 +154,11 @@ func (h *Banner) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.ucase.Delete(ID); err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	result := endpoint.Result{Result: ID}
-	if err = h.WriteResult(w, result); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Banner) AddToSlot(w http.ResponseWriter, r *http.Request) {
@@ -204,10 +186,7 @@ func (h *Banner) AddToSlot(w http.ResponseWriter, r *http.Request) {
 	bindingID, err := h.ucase.AddToSlot(bannerID, slotID)
 	if err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -243,10 +222,7 @@ func (h *Banner) DeleteFromSlot(w http.ResponseWriter, r *http.Request) {
 	bindingID, err := h.ucase.DeleteFromSlot(bannerID, slotID)
 	if err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -281,10 +257,7 @@ func (h *Banner) RegisterClick(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.ucase.RegisterClick(bannerID, groupID); err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -332,10 +305,7 @@ func (h *Banner) Choose(w http.ResponseWriter, r *http.Request) {
 	ID, err := h.ucase.Choose(slotID, groupID)
 	if err != nil {
 		h.LogError("Repository", err)
-		if err = h.WriteResult(w, endpoint.Error{Error: err.Error()}); err != nil {
-			h.LogError("Response writing", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
