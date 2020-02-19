@@ -190,8 +190,7 @@ func (h *Banner) AddToSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := endpoint.Result{Result: bindingID}
-	if err = h.WriteResult(w, result); err != nil {
+	if err = h.WriteResult(w, bindingID); err != nil {
 		h.LogError("Response writing", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -227,6 +226,41 @@ func (h *Banner) DeleteFromSlot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := endpoint.Result{Result: bindingID}
+	if err = h.WriteResult(w, result); err != nil {
+		h.LogError("Response writing", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func (h *Banner) IsInSlot(w http.ResponseWriter, r *http.Request) {
+	h.LogRequestURL(r)
+
+	if r.Method != "POST" {
+		h.MethodNotAllowedError(w, r)
+		return
+	}
+
+	form := RequestForm{Request: r}
+	bannerID, err := form.ParseInt64("bannerId", 0)
+	if err != nil {
+		h.LogError("Request parsing", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	slotID, err := form.ParseInt64("slotId", 0)
+	if err != nil {
+		h.LogError("Request parsing", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.ucase.IsInSlot(bannerID, slotID)
+	if err != nil {
+		h.LogError("Repository", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if err = h.WriteResult(w, result); err != nil {
 		h.LogError("Response writing", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -320,8 +354,44 @@ func (h *Banner) Choose(w http.ResponseWriter, r *http.Request) {
 		h.LogError("Notification", err)
 	}
 
-	result := endpoint.Result{Result: ID}
-	if err = h.WriteResult(w, result); err != nil {
+	if err = h.WriteResult(w, ID); err != nil {
+		h.LogError("Response writing", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+//GetByCaption returns banner by caption
+func (h *Banner) GetByCaption(w http.ResponseWriter, r *http.Request) {
+	h.LogRequestURL(r)
+
+	if r.Method != "POST" {
+		h.MethodNotAllowedError(w, r)
+		return
+	}
+
+	form := RequestForm{Request: r}
+	caption, err := form.ParseString("caption", "")
+	if err != nil {
+		h.LogError("Request parsing", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if caption == "" {
+		err = errors.New("The caption must be defined and be not empty")
+		h.LogError("Request parsing", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	m, err := h.ucase.GetByCaption(caption)
+	if err != nil {
+		h.LogError("Repository", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = h.WriteResult(w, m); err != nil {
 		h.LogError("Response writing", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

@@ -184,7 +184,7 @@ func (r *StatisticsRepository) GetBannerStatistics(bannerID int64) ([]*model.Sta
 	for rows.Next() {
 		m := &model.Statistics{}
 		if err := rows.Scan(&m.BannerID, &m.GroupID, &m.NumberOfShows, &m.NumberOfClicks); err != nil {
-			return nil, repository.NewReadingError(err, "failed to execute select query")
+			return nil, repository.NewReadingError(err, "failed to execute select scan")
 		}
 		list = append(list, m)
 	}
@@ -243,9 +243,29 @@ func (r *StatisticsRepository) GetRotationStatistics(slotID int64, groupID int64
 	list := make([]*model.Statistics, 0)
 	for rows.Next() {
 		m := &model.Statistics{}
-		if err := rows.Scan(&m.BannerID, &m.GroupID, &m.NumberOfShows, &m.NumberOfClicks); err != nil {
-			return nil, repository.NewReadingError(err, "failed to execute select query")
+
+		var recordGroupID *int64
+		var recordNumberOfShows *int64
+		var recordNumberOfClicks *int64
+
+		if err := rows.Scan(&m.BannerID, &recordGroupID, &recordNumberOfShows, &recordNumberOfClicks); err != nil {
+			return nil, repository.NewReadingError(err, "failed to execute row scan")
 		}
+
+		if recordGroupID != nil {
+			m.GroupID = *recordGroupID
+		} else {
+			m.GroupID = groupID
+		}
+
+		if recordNumberOfShows != nil {
+			m.NumberOfShows = *recordNumberOfShows
+		}
+
+		if recordNumberOfShows != nil {
+			m.NumberOfClicks = *recordNumberOfClicks
+		}
+
 		list = append(list, m)
 	}
 	return list, nil
@@ -261,9 +281,15 @@ func (r *StatisticsRepository) IncrementNumberOfShows(bannerID int64, groupID in
 		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	result, err := r.Execute(`UPDATE banner_statistics SET number_of_shows = (number_of_shows + 1) WHERE banner_id = $1 AND group_id = $2`, bannerID, groupID)
+	result, err := r.Execute(
+		`INSERT INTO banner_statistics AS t (banner_id, group_id, number_of_shows, number_of_clicks) VALUES($1, $2, 1, 0) 
+			ON CONFLICT(banner_id, group_id) 
+			DO UPDATE SET number_of_shows = t.number_of_shows + 1`,
+		bannerID,
+		groupID,
+	)
 	if err != nil {
-		return repository.NewDeletionError(err, "failed to execute update query for record with bannerID: %d and groupID: %d", bannerID, groupID)
+		return repository.NewUpdatingError(err, "failed to execute update query for record with bannerID: %d and groupID: %d", bannerID, groupID)
 	}
 
 	if !result {
@@ -283,9 +309,16 @@ func (r *StatisticsRepository) IncrementNumberOfClicks(bannerID int64, groupID i
 		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	result, err := r.Execute(`UPDATE banner_statistics SET number_of_clicks = (number_of_clicks + 1) WHERE banner_id = $1 AND group_id = $2`, bannerID, groupID)
+	result, err := r.Execute(
+		`INSERT INTO banner_statistics AS t (banner_id, group_id, number_of_shows, number_of_clicks) VALUES($1, $2, 1, 1) 
+			ON CONFLICT(banner_id, group_id) 
+			DO UPDATE SET number_of_clicks = t.number_of_clicks + 1`,
+		bannerID,
+		groupID,
+	)
+
 	if err != nil {
-		return repository.NewDeletionError(err, "failed to execute update query for record with bannerID: %d and groupID: %d", bannerID, groupID)
+		return repository.NewUpdatingError(err, "failed to execute update query for record with bannerID: %d and groupID: %d", bannerID, groupID)
 	}
 
 	if !result {

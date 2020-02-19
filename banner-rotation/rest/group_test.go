@@ -11,8 +11,8 @@ import (
 	"github.com/gzavodov/otus-go/banner-rotation/config"
 	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/sql"
+	"github.com/gzavodov/otus-go/banner-rotation/internal/testify"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
-	"github.com/gzavodov/otus-go/banner-rotation/test"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 )
 
@@ -35,7 +35,7 @@ func TestGroup(t *testing.T) {
 	}
 
 	var sourceGroup *model.Group
-	form := test.Form{}
+	form := testify.Form{}
 
 	t.Run("Create",
 		func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestGroup(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("caption", caption)
 
-			responseBody, err := form.Post("/group/create", formData, groupHandler.Create)
+			responseBody, err := form.EmulatePost("/group/create", formData, groupHandler.Create)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -74,7 +74,7 @@ func TestGroup(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("ID", strconv.FormatInt(sourceGroup.ID, 10))
 
-			responseBody, err := form.Post("/group/read", formData, groupHandler.Read)
+			responseBody, err := form.EmulatePost("/group/read", formData, groupHandler.Read)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -85,7 +85,7 @@ func TestGroup(t *testing.T) {
 			}
 
 			if *sourceGroup != *resultGroup {
-				t.Error(test.NewObjectNotMatchedError(sourceGroup, resultGroup))
+				t.Error(testify.NewObjectNotMatchedError(sourceGroup, resultGroup))
 			}
 		})
 
@@ -101,7 +101,7 @@ func TestGroup(t *testing.T) {
 			formData.Set("ID", strconv.FormatInt(sourceGroup.ID, 10))
 			formData.Set("caption", sourceGroup.Caption)
 
-			responseBody, err := form.Post("/group/update", formData, groupHandler.Update)
+			responseBody, err := form.EmulatePost("/group/update", formData, groupHandler.Update)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -112,7 +112,7 @@ func TestGroup(t *testing.T) {
 			}
 
 			if *sourceGroup != *resultGroup {
-				t.Error(test.NewObjectNotMatchedError(sourceGroup, resultGroup))
+				t.Error(testify.NewObjectNotMatchedError(sourceGroup, resultGroup))
 			}
 		})
 
@@ -125,7 +125,7 @@ func TestGroup(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("ID", strconv.FormatInt(sourceGroup.ID, 10))
 
-			_, err := form.Post("/group/delete", formData, groupHandler.Delete)
+			_, err := form.EmulatePost("/group/delete", formData, groupHandler.Delete)
 			if err != nil {
 				t.Fatal(err)
 			}

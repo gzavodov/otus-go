@@ -11,4 +11,5 @@ type BannerRepository interface {
 	Update(*model.Banner) error
 	Delete(int64) error
 	IsExists(int64) (bool, error)
+	GetByCaption(string) (*model.Banner, error)
 }

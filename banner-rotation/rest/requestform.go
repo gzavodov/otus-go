@@ -43,7 +43,7 @@ func (f *RequestForm) ParseUint32(name string, defaultValue uint32) (uint32, err
 	return uint32(result), err
 }
 
-//ParseInt64 parses unit32 parameter from form by specified name
+//ParseInt64 parses int64 parameter from form by specified name
 func (f *RequestForm) ParseInt64(name string, defaultValue int64) (int64, error) {
 	err := f.parse()
 	if err != nil {
@@ -56,6 +56,20 @@ func (f *RequestForm) ParseInt64(name string, defaultValue int64) (int64, error)
 	}
 	result, err := strconv.ParseInt(value, 10, 64)
 	return result, err
+}
+
+//ParseString parses string parameter from form by specified name
+func (f *RequestForm) ParseString(name string, defaultValue string) (string, error) {
+	err := f.parse()
+	if err != nil {
+		return "", err
+	}
+
+	value := f.Request.FormValue(name)
+	if len(value) == 0 {
+		return defaultValue, nil
+	}
+	return value, nil
 }
 
 //ParseBanner parses banner from form

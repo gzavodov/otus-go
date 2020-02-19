@@ -138,3 +138,30 @@ func (r *BannerRepository) IsExists(ID int64) (bool, error) {
 
 	return true, nil
 }
+
+//GetByCaption returns Banner bt specified caption
+func (r *BannerRepository) GetByCaption(caption string) (*model.Banner, error) {
+	if caption == "" {
+		return nil, repository.NewInvalidArgumentError("first parameter must be not empty string")
+	}
+
+	row, err := r.QueryRow(
+		`SELECT id, caption FROM banner WHERE caption = $1 ORDER BY id DESC LIMIT 1`,
+		caption,
+	)
+
+	if err != nil {
+		return nil, repository.NewReadingError(err, "failed to execute select query")
+	}
+
+	m := &model.Banner{}
+	if err := row.Scan(&m.ID, &m.Caption); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, repository.NewNotFoundError("failed to find record with caption: %s", caption)
+		}
+
+		return nil, repository.NewReadingError(err, "failed to fetch query result")
+	}
+
+	return m, nil
+}

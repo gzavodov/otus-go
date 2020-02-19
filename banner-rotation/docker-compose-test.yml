@@ -57,6 +57,6 @@ services:
       - rabbitmq
     env_file:
       - ./env/test.env
-    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh banner_rotation_api:8390 -- /banner-rotation/test --test.v"]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh banner_rotation_api:8390 -- /banner-rotation/app "]
     networks:
        - banner_rotation_nw

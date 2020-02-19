@@ -2,5 +2,8 @@
     "http_listen": "0.0.0.0:8390",
     "log_file": "stdout",
     "log_level": "debug",
-    "event_repository_dsn": "user=postgres password= host=127.0.0.1 port=5432 database= sslmode=disable"
+    "algorithm_type_id": 1,
+    "repository_dsn": "user=postgres password= host=127.0.0.1 port=5432 database= sslmode=disable",
+    "ampq_name": "banner-rotation-notifications",
+    "ampq_address": "amqp://guest:guest@0.0.0.0:5672/"
 }

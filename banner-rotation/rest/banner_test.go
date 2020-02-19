@@ -11,8 +11,8 @@ import (
 	"github.com/gzavodov/otus-go/banner-rotation/config"
 	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/sql"
+	"github.com/gzavodov/otus-go/banner-rotation/internal/testify"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
-	"github.com/gzavodov/otus-go/banner-rotation/test"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 )
 
@@ -40,7 +40,7 @@ func TestBanner(t *testing.T) {
 	}
 
 	var sourceBanner *model.Banner
-	form := test.Form{}
+	form := testify.Form{}
 
 	t.Run("Create",
 		func(t *testing.T) {
@@ -49,7 +49,7 @@ func TestBanner(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("caption", caption)
 
-			responseBody, err := form.Post("/banner/create", formData, bannerHandler.Create)
+			responseBody, err := form.EmulatePost("/banner/create", formData, bannerHandler.Create)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -79,7 +79,7 @@ func TestBanner(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("ID", strconv.FormatInt(sourceBanner.ID, 10))
 
-			responseBody, err := form.Post("/banner/read", formData, bannerHandler.Read)
+			responseBody, err := form.EmulatePost("/banner/read", formData, bannerHandler.Read)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -90,7 +90,7 @@ func TestBanner(t *testing.T) {
 			}
 
 			if *sourceBanner != *resultBanner {
-				t.Error(test.NewObjectNotMatchedError(sourceBanner, resultBanner))
+				t.Error(testify.NewObjectNotMatchedError(sourceBanner, resultBanner))
 			}
 		})
 
@@ -106,7 +106,7 @@ func TestBanner(t *testing.T) {
 			formData.Set("ID", strconv.FormatInt(sourceBanner.ID, 10))
 			formData.Set("caption", sourceBanner.Caption)
 
-			responseBody, err := form.Post("/banner/update", formData, bannerHandler.Update)
+			responseBody, err := form.EmulatePost("/banner/update", formData, bannerHandler.Update)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -117,7 +117,7 @@ func TestBanner(t *testing.T) {
 			}
 
 			if *sourceBanner != *resultBanner {
-				t.Error(test.NewObjectNotMatchedError(sourceBanner, resultBanner))
+				t.Error(testify.NewObjectNotMatchedError(sourceBanner, resultBanner))
 			}
 		})
 
@@ -130,7 +130,7 @@ func TestBanner(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("ID", strconv.FormatInt(sourceBanner.ID, 10))
 
-			_, err := form.Post("/banner/delete", formData, bannerHandler.Delete)
+			_, err := form.EmulatePost("/banner/delete", formData, bannerHandler.Delete)
 			if err != nil {
 				t.Fatal(err)
 			}

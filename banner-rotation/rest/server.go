@@ -67,9 +67,12 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/banner/read", s.bannerHandler.Read)
 	serverMux.HandleFunc("/banner/update", s.bannerHandler.Update)
 	serverMux.HandleFunc("/banner/delete", s.bannerHandler.Delete)
+	serverMux.HandleFunc("/banner/get-by-caption", s.bannerHandler.GetByCaption)
 
 	serverMux.HandleFunc("/banner/add-to-slot", s.bannerHandler.AddToSlot)
 	serverMux.HandleFunc("/banner/delete-from-slot", s.bannerHandler.DeleteFromSlot)
+	serverMux.HandleFunc("/banner/is-in-slot", s.bannerHandler.IsInSlot)
+
 	serverMux.HandleFunc("/banner/register-click", s.bannerHandler.RegisterClick)
 	serverMux.HandleFunc("/banner/choose", s.bannerHandler.Choose)
 
@@ -86,6 +89,7 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/slot/read", s.slotHandler.Read)
 	serverMux.HandleFunc("/slot/update", s.slotHandler.Update)
 	serverMux.HandleFunc("/slot/delete", s.slotHandler.Delete)
+	serverMux.HandleFunc("/slot/get-by-caption", s.slotHandler.GetByCaption)
 
 	s.groupHandler = &Group{
 		Handler: endpoint.Handler{
@@ -100,6 +104,7 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/group/read", s.groupHandler.Read)
 	serverMux.HandleFunc("/group/update", s.groupHandler.Update)
 	serverMux.HandleFunc("/group/delete", s.groupHandler.Delete)
+	serverMux.HandleFunc("/group/get-by-caption", s.groupHandler.GetByCaption)
 
 	s.server = &http.Server{Addr: s.Address, Handler: serverMux}
 

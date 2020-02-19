@@ -11,8 +11,8 @@ import (
 	"github.com/gzavodov/otus-go/banner-rotation/config"
 	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/sql"
+	"github.com/gzavodov/otus-go/banner-rotation/internal/testify"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
-	"github.com/gzavodov/otus-go/banner-rotation/test"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 )
 
@@ -35,7 +35,7 @@ func TestSlot(t *testing.T) {
 	}
 
 	var sourceSlot *model.Slot
-	form := test.Form{}
+	form := testify.Form{}
 
 	t.Run("Create",
 		func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestSlot(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("caption", caption)
 
-			responseBody, err := form.Post("/slot/create", formData, slotHandler.Create)
+			responseBody, err := form.EmulatePost("/slot/create", formData, slotHandler.Create)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -74,7 +74,7 @@ func TestSlot(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("ID", strconv.FormatInt(sourceSlot.ID, 10))
 
-			responseBody, err := form.Post("/slot/read", formData, slotHandler.Read)
+			responseBody, err := form.EmulatePost("/slot/read", formData, slotHandler.Read)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -85,7 +85,7 @@ func TestSlot(t *testing.T) {
 			}
 
 			if *sourceSlot != *resultSlot {
-				t.Error(test.NewObjectNotMatchedError(sourceSlot, resultSlot))
+				t.Error(testify.NewObjectNotMatchedError(sourceSlot, resultSlot))
 			}
 		})
 
@@ -101,7 +101,7 @@ func TestSlot(t *testing.T) {
 			formData.Set("ID", strconv.FormatInt(sourceSlot.ID, 10))
 			formData.Set("caption", sourceSlot.Caption)
 
-			responseBody, err := form.Post("/slot/update", formData, slotHandler.Update)
+			responseBody, err := form.EmulatePost("/slot/update", formData, slotHandler.Update)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -112,7 +112,7 @@ func TestSlot(t *testing.T) {
 			}
 
 			if *sourceSlot != *resultSlot {
-				t.Error(test.NewObjectNotMatchedError(sourceSlot, resultSlot))
+				t.Error(testify.NewObjectNotMatchedError(sourceSlot, resultSlot))
 			}
 		})
 
@@ -125,7 +125,7 @@ func TestSlot(t *testing.T) {
 			formData := url.Values{}
 			formData.Set("ID", strconv.FormatInt(sourceSlot.ID, 10))
 
-			_, err := form.Post("/slot/delete", formData, slotHandler.Delete)
+			_, err := form.EmulatePost("/slot/delete", formData, slotHandler.Delete)
 			if err != nil {
 				t.Fatal(err)
 			}

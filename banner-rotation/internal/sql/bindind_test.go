@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gzavodov/otus-go/banner-rotation/config"
+	"github.com/gzavodov/otus-go/banner-rotation/internal/testify"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
-	"github.com/gzavodov/otus-go/banner-rotation/test"
 )
 
 func TestBindingRepository(t *testing.T) {
@@ -36,7 +36,7 @@ func TestBindingRepository(t *testing.T) {
 			}
 
 			if !ok {
-				t.Error(test.NewObjectNotFoundError())
+				t.Error(testify.NewObjectNotFoundError())
 			}
 
 			if err = repo.Delete(source.ID); err != nil {
@@ -58,7 +58,7 @@ func TestBindingRepository(t *testing.T) {
 			}
 
 			if *source != *result {
-				t.Error(test.NewObjectNotMatchedError(source, result))
+				t.Error(testify.NewObjectNotMatchedError(source, result))
 			}
 
 			if err = repo.Delete(source.ID); err != nil {
@@ -89,7 +89,7 @@ func TestBindingRepository(t *testing.T) {
 			}
 
 			if *source != *result {
-				t.Error(test.NewObjectNotMatchedError(source, result))
+				t.Error(testify.NewObjectNotMatchedError(source, result))
 			}
 
 			if err = repo.Delete(source.ID); err != nil {
@@ -117,7 +117,7 @@ func TestBindingRepository(t *testing.T) {
 			}
 
 			if ok {
-				t.Fatal(test.NewObjectNotDeletedError())
+				t.Fatal(testify.NewObjectNotDeletedError())
 			}
 		})
 }

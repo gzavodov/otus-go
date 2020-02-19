@@ -44,3 +44,10 @@ func (c *Slot) Delete(ID int64) error {
 
 	return c.repo.Delete(ID)
 }
+
+func (c *Slot) GetByCaption(caption string) (*model.Slot, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.repo.GetByCaption(caption)
+}

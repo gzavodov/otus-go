@@ -86,6 +86,13 @@ func (c *Banner) remove(ID int64) error {
 	return nil
 }
 
+func (c *Banner) GetByCaption(caption string) (*model.Banner, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.bannerRepo.GetByCaption(caption)
+}
+
 func (c *Banner) AddToSlot(bannerID int64, slotID int64) (int64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -172,6 +179,20 @@ func (c *Banner) unbindFromSlot(bannerID int64, slotID int64) (int64, error) {
 	}
 
 	return binding.ID, nil
+}
+
+func (c *Banner) IsInSlot(bannerID int64, slotID int64) (bool, error) {
+
+	binding, err := c.bindingRepo.GetBinding(bannerID, slotID)
+	if err != nil {
+		return false, err
+	}
+
+	if binding != nil {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {

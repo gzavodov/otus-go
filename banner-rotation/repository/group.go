@@ -11,4 +11,5 @@ type GroupRepository interface {
 	Update(*model.Group) error
 	Delete(int64) error
 	IsExists(int64) (bool, error)
+	GetByCaption(string) (*model.Group, error)
 }

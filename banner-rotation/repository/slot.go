@@ -11,4 +11,5 @@ type SlotRepository interface {
 	Update(*model.Slot) error
 	Delete(int64) error
 	IsExists(int64) (bool, error)
+	GetByCaption(string) (*model.Slot, error)
 }

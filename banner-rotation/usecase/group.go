@@ -44,3 +44,10 @@ func (c *Group) Delete(ID int64) error {
 
 	return c.repo.Delete(ID)
 }
+
+func (c *Group) GetByCaption(caption string) (*model.Group, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.repo.GetByCaption(caption)
+}

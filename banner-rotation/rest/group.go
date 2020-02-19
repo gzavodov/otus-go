@@ -157,3 +157,40 @@ func (h *Group) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+//GetByCaption returns group by caption
+func (h *Group) GetByCaption(w http.ResponseWriter, r *http.Request) {
+	h.LogRequestURL(r)
+
+	if r.Method != "POST" {
+		h.MethodNotAllowedError(w, r)
+		return
+	}
+
+	form := RequestForm{Request: r}
+	caption, err := form.ParseString("caption", "")
+	if err != nil {
+		h.LogError("Request parsing", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if caption == "" {
+		err = errors.New("The caption must be defined and be not empty")
+		h.LogError("Request parsing", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	m, err := h.ucase.GetByCaption(caption)
+	if err != nil {
+		h.LogError("Repository", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = h.WriteResult(w, m); err != nil {
+		h.LogError("Response writing", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}

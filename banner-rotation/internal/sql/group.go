@@ -116,7 +116,7 @@ func (r *GroupRepository) Delete(ID int64) error {
 	return nil
 }
 
-//IsExists check if repository contains banner with specified ID
+//IsExists check if repository contains Banner Group with specified ID
 func (r *GroupRepository) IsExists(ID int64) (bool, error) {
 	if ID <= 0 {
 		return false, repository.NewInvalidArgumentError("first parameter must be greater than zero")
@@ -137,4 +137,31 @@ func (r *GroupRepository) IsExists(ID int64) (bool, error) {
 	}
 
 	return true, nil
+}
+
+//GetByCaption returns Banner Group bt specified caption
+func (r *GroupRepository) GetByCaption(caption string) (*model.Group, error) {
+	if caption == "" {
+		return nil, repository.NewInvalidArgumentError("first parameter must be not empty string")
+	}
+
+	row, err := r.QueryRow(
+		`SELECT id, caption FROM banner_group WHERE caption = $1 ORDER BY id DESC LIMIT 1`,
+		caption,
+	)
+
+	if err != nil {
+		return nil, repository.NewReadingError(err, "failed to execute select query")
+	}
+
+	m := &model.Group{}
+	if err := row.Scan(&m.ID, &m.Caption); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, repository.NewNotFoundError("failed to find record with caption: %s", caption)
+		}
+
+		return nil, repository.NewReadingError(err, "failed to fetch query result")
+	}
+
+	return m, nil
 }

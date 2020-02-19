@@ -84,5 +84,6 @@ func (h *Handler) Notify(notification *queue.Notification) error {
 	if h.NotificationChannel == nil {
 		return nil
 	}
+
 	return h.NotificationChannel.Write(notification)
 }
