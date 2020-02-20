@@ -193,13 +193,13 @@ func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {
 }
 
 func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	var alg algorithm.MultiArmedBandit
+
+	c.mu.RLock()
 	if _, ok := c.algorithmCache[groupID]; ok {
 		alg = c.algorithmCache[groupID][slotID]
 	}
+	c.mu.RUnlock()
 
 	if alg == nil {
 		statList, err := c.statisticsRepo.GetRotationStatistics(slotID, groupID)
@@ -218,11 +218,19 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 			return 0, err
 		}
 
-		if _, ok := c.algorithmCache[groupID]; !ok {
-			c.algorithmCache[groupID] = make(map[int64]algorithm.MultiArmedBandit)
+		c.mu.Lock()
+		if _, ok := c.algorithmCache[groupID]; ok {
+			alg = c.algorithmCache[groupID][slotID]
 		}
-		c.algorithmCache[groupID][slotID] = newAlg
-		alg = newAlg
+
+		if alg == nil {
+			if _, ok := c.algorithmCache[groupID]; !ok {
+				c.algorithmCache[groupID] = make(map[int64]algorithm.MultiArmedBandit)
+			}
+			c.algorithmCache[groupID][slotID] = newAlg
+			alg = newAlg
+		}
+		c.mu.Unlock()
 	}
 
 	index := alg.ResolveArmIndex()
@@ -235,6 +243,7 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 		return 0, err
 	}
 
+	c.mu.Lock()
 	if _, ok := c.algorithmCache[groupID]; ok {
 		for slotID := range c.algorithmCache[groupID] {
 			alg := c.algorithmCache[groupID][slotID]
@@ -249,6 +258,7 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 			}
 		}
 	}
+	c.mu.Unlock()
 
 	return bannerID, nil
 }
