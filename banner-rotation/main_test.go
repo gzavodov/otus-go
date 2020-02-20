@@ -15,7 +15,7 @@ func TestMain(m *testing.M) {
 			Format:      "progress",
 			Paths:       []string{"features"},
 			Randomize:   0,
-			Concurrency: 0,
+			Concurrency: 2,
 		},
 	)
 

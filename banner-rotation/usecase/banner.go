@@ -20,7 +20,7 @@ func NewBannerUsecase(
 		statisticsRepo:  statisticsRepo,
 		algorithmTypeID: algorithmTypeID,
 		mu:              sync.RWMutex{},
-		statisticsCache: make(map[int64]map[int64][]*model.Statistics),
+		algorithmCache:  make(map[int64]map[int64]algorithm.MultiArmedBandit),
 	}
 }
 
@@ -30,53 +30,38 @@ type Banner struct {
 	statisticsRepo  repository.StatisticsRepository
 	algorithmTypeID int
 
-	mu              sync.RWMutex
-	statisticsCache map[int64]map[int64][]*model.Statistics
+	mu             sync.RWMutex
+	algorithmCache map[int64]map[int64]algorithm.MultiArmedBandit
 }
 
 func (c *Banner) Create(m *model.Banner) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	return c.bannerRepo.Create(m)
 }
 
 func (c *Banner) Read(ID int64) (*model.Banner, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	return c.bannerRepo.Read(ID)
 }
 
 func (c *Banner) Update(m *model.Banner) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	return c.bannerRepo.Update(m)
 }
 
 func (c *Banner) Delete(ID int64) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	return c.remove(ID)
-}
-
-func (c *Banner) remove(ID int64) error {
-	err := c.bannerRepo.Delete(ID)
-	if err != nil {
+	if err := c.bannerRepo.Delete(ID); err != nil {
 		return err
 	}
 
-	for groupID := range c.statisticsCache {
-		for slotID := range c.statisticsCache[groupID] {
-			count := len(c.statisticsCache[groupID][slotID])
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for groupID := range c.algorithmCache {
+		for slotID := range c.algorithmCache[groupID] {
+			alg := c.algorithmCache[groupID][slotID]
+
+			count := alg.GetArmCount()
 			for i := 0; i < count; i++ {
-				if c.statisticsCache[groupID][slotID][i].BannerID == ID {
-					c.statisticsCache[groupID][slotID] = append(
-						c.statisticsCache[groupID][slotID][:i],
-						c.statisticsCache[groupID][slotID][i+1:]...,
-					)
+				if alg.GetArm(i).(*model.Statistics).BannerID == ID {
+					alg.RemoveArm(i)
 					break
 				}
 			}
@@ -87,20 +72,10 @@ func (c *Banner) remove(ID int64) error {
 }
 
 func (c *Banner) GetByCaption(caption string) (*model.Banner, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	return c.bannerRepo.GetByCaption(caption)
 }
 
 func (c *Banner) AddToSlot(bannerID int64, slotID int64) (int64, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	return c.bindToSlot(bannerID, slotID)
-}
-
-func (c *Banner) bindToSlot(bannerID int64, slotID int64) (int64, error) {
 	//Check if binding already exists
 	binding, err := c.bindingRepo.GetBinding(bannerID, slotID)
 	if err != nil {
@@ -116,37 +91,31 @@ func (c *Banner) bindToSlot(bannerID int64, slotID int64) (int64, error) {
 		return 0, err
 	}
 
-	for groupID := range c.statisticsCache {
-		if _, ok := c.statisticsCache[groupID][slotID]; !ok {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for groupID := range c.algorithmCache {
+		alg, ok := c.algorithmCache[groupID][slotID]
+		if !ok {
 			continue
 		}
 
-		item, err := c.statisticsRepo.Read(bannerID, groupID)
+		stat, err := c.statisticsRepo.Read(bannerID, groupID)
 		if err != nil && !repository.IsNotFoundError(err) {
 			return 0, err
 		}
 
-		if item == nil {
-			item = &model.Statistics{BannerID: bannerID, GroupID: groupID}
+		if stat == nil {
+			stat = &model.Statistics{BannerID: bannerID, GroupID: groupID}
 		}
 
-		c.statisticsCache[groupID][slotID] = append(
-			c.statisticsCache[groupID][slotID],
-			item,
-		)
+		alg.AddArm(stat)
 	}
 
 	return binding.ID, nil
 }
 
 func (c *Banner) DeleteFromSlot(bannerID int64, slotID int64) (int64, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	return c.unbindFromSlot(bannerID, slotID)
-}
-
-func (c *Banner) unbindFromSlot(bannerID int64, slotID int64) (int64, error) {
 	//Check if binding exists
 	binding, err := c.bindingRepo.GetBinding(bannerID, slotID)
 	if err != nil {
@@ -161,18 +130,19 @@ func (c *Banner) unbindFromSlot(bannerID int64, slotID int64) (int64, error) {
 		return 0, err
 	}
 
-	for groupID := range c.statisticsCache {
-		if _, ok := c.statisticsCache[groupID][slotID]; !ok {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for groupID := range c.algorithmCache {
+		alg, ok := c.algorithmCache[groupID][slotID]
+		if !ok {
 			continue
 		}
 
-		count := len(c.statisticsCache[groupID][slotID])
+		count := alg.GetArmCount()
 		for i := 0; i < count; i++ {
-			if c.statisticsCache[groupID][slotID][i].BannerID == bannerID {
-				c.statisticsCache[groupID][slotID] = append(
-					c.statisticsCache[groupID][slotID][:i],
-					c.statisticsCache[groupID][slotID][i+1:]...,
-				)
+			if alg.GetArm(i).(*model.Statistics).BannerID == bannerID {
+				alg.RemoveArm(i)
 				break
 			}
 		}
@@ -182,7 +152,6 @@ func (c *Banner) unbindFromSlot(bannerID int64, slotID int64) (int64, error) {
 }
 
 func (c *Banner) IsInSlot(bannerID int64, slotID int64) (bool, error) {
-
 	binding, err := c.bindingRepo.GetBinding(bannerID, slotID)
 	if err != nil {
 		return false, err
@@ -196,25 +165,26 @@ func (c *Banner) IsInSlot(bannerID int64, slotID int64) (bool, error) {
 }
 
 func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	return c.incrementNumberOfClicks(bannerID, groupID)
-}
-
-func (c *Banner) incrementNumberOfClicks(bannerID int64, groupID int64) error {
 	if err := c.statisticsRepo.IncrementNumberOfClicks(bannerID, groupID); err != nil {
 		return err
 	}
 
-	if _, ok := c.statisticsCache[groupID]; ok {
-		for slotID := range c.statisticsCache[groupID] {
-			count := len(c.statisticsCache[groupID][slotID])
-			for i := 0; i < count; i++ {
-				if c.statisticsCache[groupID][slotID][i].BannerID == bannerID {
-					c.statisticsCache[groupID][slotID][i].NumberOfClicks++
-					break
-				}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.algorithmCache[groupID]; !ok {
+		return nil
+	}
+
+	for slotID := range c.algorithmCache[groupID] {
+		alg := c.algorithmCache[groupID][slotID]
+
+		count := alg.GetArmCount()
+		for i := 0; i < count; i++ {
+			stat := alg.GetArm(i).(*model.Statistics)
+			if stat.BannerID == bannerID {
+				stat.NumberOfClicks++
+				break
 			}
 		}
 	}
@@ -223,23 +193,38 @@ func (c *Banner) incrementNumberOfClicks(bannerID int64, groupID int64) error {
 }
 
 func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	statisticsList, err := c.getRotationStatistics(slotID, groupID)
-	if err != nil {
-		return 0, err
+	var alg algorithm.MultiArmedBandit
+	c.mu.RLock()
+	if _, ok := c.algorithmCache[groupID]; ok {
+		alg = c.algorithmCache[groupID][slotID]
 	}
+	c.mu.RUnlock()
 
-	quantity := len(statisticsList)
-	adapters := make([]algorithm.Statistics, quantity)
-	for i := 0; i < quantity; i++ {
-		adapters[i] = NewStatisticsAdapter(statisticsList[i])
-	}
+	if alg == nil {
+		statList, err := c.statisticsRepo.GetRotationStatistics(slotID, groupID)
+		if err != nil {
+			return 0, err
+		}
 
-	alg, err := algorithm.CreateMultiArmedBandit(c.algorithmTypeID, adapters)
-	if err != nil {
-		return 0, err
+		count := len(statList)
+		algStatList := make([]algorithm.BanditArm, count)
+		for i := 0; i < count; i++ {
+			algStatList[i] = statList[i]
+		}
+
+		newAlg, err := algorithm.CreateMultiArmedBandit(c.algorithmTypeID, algStatList)
+		if err != nil {
+			return 0, err
+		}
+
+		c.mu.Lock()
+		if _, ok := c.algorithmCache[groupID]; !ok {
+			c.algorithmCache[groupID] = make(map[int64]algorithm.MultiArmedBandit)
+		}
+		c.algorithmCache[groupID][slotID] = newAlg
+		c.mu.Unlock()
+
+		alg = newAlg
 	}
 
 	index := alg.ResolveArmIndex()
@@ -247,49 +232,28 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 		return 0, nil
 	}
 
-	bannerID := statisticsList[index].BannerID
-	if err := c.incrementNumberOfShows(bannerID, groupID); err != nil {
+	bannerID := alg.GetArm(index).(*model.Statistics).BannerID
+	if err := c.statisticsRepo.IncrementNumberOfShows(bannerID, groupID); err != nil {
 		return 0, err
 	}
-	return bannerID, nil
-}
 
-func (c *Banner) getRotationStatistics(slotID int64, groupID int64) ([]*model.Statistics, error) {
-	if _, ok := c.statisticsCache[groupID]; !ok {
-		c.statisticsCache[groupID] = make(map[int64][]*model.Statistics)
-	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	if _, ok := c.statisticsCache[groupID][slotID]; !ok {
-		list, err := c.statisticsRepo.GetRotationStatistics(slotID, groupID)
-		if err != nil {
-			return nil, err
-		}
-		c.statisticsCache[groupID][slotID] = list
-	}
+	if _, ok := c.algorithmCache[groupID]; ok {
+		for slotID := range c.algorithmCache[groupID] {
+			alg := c.algorithmCache[groupID][slotID]
 
-	return c.statisticsCache[groupID][slotID], nil
-}
-
-func (c *Banner) incrementNumberOfShows(bannerID int64, groupID int64) error {
-	if err := c.statisticsRepo.IncrementNumberOfShows(bannerID, groupID); err != nil {
-		return err
-	}
-
-	if _, ok := c.statisticsCache[groupID]; !ok {
-		return nil
-	}
-
-	if _, ok := c.statisticsCache[groupID]; ok {
-		for slotID := range c.statisticsCache[groupID] {
-			count := len(c.statisticsCache[groupID][slotID])
+			count := alg.GetArmCount()
 			for i := 0; i < count; i++ {
-				if c.statisticsCache[groupID][slotID][i].BannerID == bannerID {
-					c.statisticsCache[groupID][slotID][i].NumberOfShows++
+				stat := alg.GetArm(i).(*model.Statistics)
+				if stat.BannerID == bannerID {
+					stat.NumberOfShows++
 					break
 				}
 			}
 		}
 	}
 
-	return nil
+	return bannerID, nil
 }

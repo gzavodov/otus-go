@@ -19,4 +19,9 @@ type MultiArmedBandit interface {
 	RegisterArmReward(armIndex int, reward float64) error
 	GetCounts() []int64
 	GetRewards() []float64
+
+	GetArmCount() int
+	GetArm(int) BanditArm
+	AddArm(BanditArm)
+	RemoveArm(int)
 }

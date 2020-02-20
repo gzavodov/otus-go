@@ -8,13 +8,13 @@ import (
 )
 
 func TestUCB1Coverage(t *testing.T) {
-	count := 50
-	statisticsList := make([]Statistics, 0, count)
+	count := 1000
+	banditArms := make([]BanditArm, 0, count)
 	for i := 0; i < count; i++ {
-		statisticsList = append(statisticsList, &BaseStatistics{})
+		banditArms = append(banditArms, &BaseBanditArm{})
 	}
 
-	alg, err := NewUCB1(statisticsList)
+	alg, err := NewUCB1(banditArms)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,12 +25,12 @@ func TestUCB1Coverage(t *testing.T) {
 			t.Error(err)
 		}
 
-		statisticsList[index].SetCount(statisticsList[index].GetCount() + 1)
+		banditArms[index].SetCount(banditArms[index].GetCount() + 1)
 	}
 
 	omittedCount := 0
 	for i := 0; i < count; i++ {
-		if statisticsList[i].GetCount() == 0 {
+		if banditArms[i].GetCount() == 0 {
 			omittedCount++
 		}
 	}
@@ -40,28 +40,28 @@ func TestUCB1Coverage(t *testing.T) {
 	}
 }
 func TestUCB1Optimality(t *testing.T) {
-	itemCount := 50
-	statisticsList := make([]Statistics, 0, itemCount)
-	for i := 0; i < itemCount; i++ {
-		statisticsList = append(statisticsList, &BaseStatistics{})
+	armCount := 1000
+	banditArms := make([]BanditArm, 0, armCount)
+	for i := 0; i < armCount; i++ {
+		banditArms = append(banditArms, &BaseBanditArm{})
 	}
 
-	alg, err := NewUCB1(statisticsList)
+	alg, err := NewUCB1(banditArms)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tryCount := itemCount * 5
+	tryCount := armCount * 10
 	for i := 0; i < tryCount; i++ {
 		index := alg.ResolveArmIndex()
 		if index < 0 {
 			t.Error(err)
 		}
 
-		statisticsList[index].SetCount(statisticsList[index].GetCount() + 1)
+		banditArms[index].SetCount(banditArms[index].GetCount() + 1)
 		rand.Seed(time.Now().UnixNano())
 		if rand.Int31n(10) >= 5 {
-			statisticsList[index].SetReward(statisticsList[index].GetReward() + 1)
+			banditArms[index].SetReward(banditArms[index].GetReward() + 1)
 		}
 	}
 
@@ -73,14 +73,14 @@ func TestUCB1Optimality(t *testing.T) {
 	var maxReward float64
 	var maxRewardIndex int
 
-	for i := 0; i < itemCount; i++ {
-		count := statisticsList[i].GetCount()
+	for i := 0; i < armCount; i++ {
+		count := banditArms[i].GetCount()
 		if maxCount < count {
 			maxCount = count
 			maxCountIndex = i
 		}
 
-		reward := statisticsList[i].GetReward()
+		reward := banditArms[i].GetReward()
 		if maxReward < reward {
 			maxReward = reward
 			maxRewardIndex = i
