@@ -1,6 +1,8 @@
 *
 !*.*
 !*/
+!MakeFile
+!Dockerfile*
 *.exe
 *.code-workspace
 log.json
