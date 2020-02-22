@@ -61,6 +61,12 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
             | top-center | teenagers |
             | top-right  | adults    |
             | top-left   | elderly   |
+            | top-center | teenagers |
+            | top-right  | adults    |
+            | top-left   | elderly   |
+            | top-center | teenagers |
+            | top-right  | adults    |
+            | top-left   | elderly   |
         Then Client receives notification about banner show
 
     Scenario: Client registers banner click events

@@ -28,8 +28,12 @@ func (r *BindingRepository) Create(m *model.Binding) error {
 		return repository.NewInvalidArgumentError("first parameter must be not null pointer")
 	}
 
+	//For operationg in concurrecy mode we are using upsert operation. the fake update on conflict is required for return record ID
 	row, err := r.QueryRow(
-		`INSERT INTO banner_binding(banner_id, slot_id) VALUES($1, $2) RETURNING id`,
+		`INSERT INTO banner_binding AS b(banner_id, slot_id) VALUES($1, $2) 
+			ON CONFLICT(banner_id, slot_id) 
+			DO UPDATE SET banner_id = b.banner_id, slot_id = b.slot_id 
+		RETURNING b.id`,
 		m.BannerID,
 		m.SlotID,
 	)

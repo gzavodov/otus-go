@@ -1,12 +1,16 @@
 package usecase
 
 import (
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gzavodov/otus-go/banner-rotation/algorithm"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
 	"github.com/gzavodov/otus-go/banner-rotation/repository"
 )
+
+const lockWaitInterval = 50
 
 func NewBannerUsecase(
 	bannerRepo repository.BannerRepository,
@@ -19,8 +23,10 @@ func NewBannerUsecase(
 		bindingRepo:     bindingRepo,
 		statisticsRepo:  statisticsRepo,
 		algorithmTypeID: algorithmTypeID,
-		mu:              sync.RWMutex{},
 		algorithmCache:  make(map[int64]map[int64]algorithm.MultiArmedBandit),
+		locks:           make(map[string]bool),
+		algMu:           &sync.RWMutex{},
+		lockMu:          &sync.RWMutex{},
 	}
 }
 
@@ -30,8 +36,10 @@ type Banner struct {
 	statisticsRepo  repository.StatisticsRepository
 	algorithmTypeID int
 
-	mu             sync.RWMutex
+	locks          map[string]bool
 	algorithmCache map[int64]map[int64]algorithm.MultiArmedBandit
+	lockMu         *sync.RWMutex
+	algMu          *sync.RWMutex
 }
 
 func (c *Banner) Create(m *model.Banner) error {
@@ -51,8 +59,8 @@ func (c *Banner) Delete(ID int64) error {
 		return err
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.algMu.Lock()
+	defer c.algMu.Unlock()
 
 	for groupID := range c.algorithmCache {
 		for slotID := range c.algorithmCache[groupID] {
@@ -91,8 +99,8 @@ func (c *Banner) AddToSlot(bannerID int64, slotID int64) (int64, error) {
 		return 0, err
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.algMu.Lock()
+	defer c.algMu.Unlock()
 
 	for groupID := range c.algorithmCache {
 		alg, ok := c.algorithmCache[groupID][slotID]
@@ -130,8 +138,8 @@ func (c *Banner) DeleteFromSlot(bannerID int64, slotID int64) (int64, error) {
 		return 0, err
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.algMu.Lock()
+	defer c.algMu.Unlock()
 
 	for groupID := range c.algorithmCache {
 		alg, ok := c.algorithmCache[groupID][slotID]
@@ -169,8 +177,8 @@ func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {
 		return err
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.algMu.Lock()
+	defer c.algMu.Unlock()
 
 	if _, ok := c.algorithmCache[groupID]; !ok {
 		return nil
@@ -193,13 +201,30 @@ func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {
 }
 
 func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
-	var alg algorithm.MultiArmedBandit
+	key := fmt.Sprintf("%d:%d", slotID, groupID)
 
-	c.mu.RLock()
+	c.lockMu.Lock()
+	isLocked := c.locks[key]
+	if !isLocked {
+		c.locks[key] = true
+	}
+	c.lockMu.Unlock()
+
+	if isLocked {
+		time.Sleep(lockWaitInterval * time.Millisecond)
+		return c.Choose(slotID, groupID)
+	}
+
+	defer func() {
+		c.lockMu.Lock()
+		delete(c.locks, key)
+		c.lockMu.Unlock()
+	}()
+
+	var alg algorithm.MultiArmedBandit
 	if _, ok := c.algorithmCache[groupID]; ok {
 		alg = c.algorithmCache[groupID][slotID]
 	}
-	c.mu.RUnlock()
 
 	if alg == nil {
 		statList, err := c.statisticsRepo.GetRotationStatistics(slotID, groupID)
@@ -218,19 +243,14 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 			return 0, err
 		}
 
-		c.mu.Lock()
-		if _, ok := c.algorithmCache[groupID]; ok {
-			alg = c.algorithmCache[groupID][slotID]
+		c.algMu.Lock()
+		if _, ok := c.algorithmCache[groupID]; !ok {
+			c.algorithmCache[groupID] = make(map[int64]algorithm.MultiArmedBandit)
 		}
+		c.algorithmCache[groupID][slotID] = newAlg
+		c.algMu.Unlock()
 
-		if alg == nil {
-			if _, ok := c.algorithmCache[groupID]; !ok {
-				c.algorithmCache[groupID] = make(map[int64]algorithm.MultiArmedBandit)
-			}
-			c.algorithmCache[groupID][slotID] = newAlg
-			alg = newAlg
-		}
-		c.mu.Unlock()
+		alg = newAlg
 	}
 
 	index := alg.ResolveArmIndex()
@@ -243,7 +263,7 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 		return 0, err
 	}
 
-	c.mu.Lock()
+	c.algMu.Lock()
 	if _, ok := c.algorithmCache[groupID]; ok {
 		for slotID := range c.algorithmCache[groupID] {
 			alg := c.algorithmCache[groupID][slotID]
@@ -258,7 +278,7 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 			}
 		}
 	}
-	c.mu.Unlock()
+	c.algMu.Unlock()
 
 	return bannerID, nil
 }
