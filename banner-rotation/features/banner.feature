@@ -37,23 +37,65 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
             | top-center-1  | top-center |
             | top-center-2  | top-center |
             | top-center-3  | top-center |
+            | top-center-4  | top-center |
+            | top-center-5  | top-center |
+            | top-center-6  | top-center |
+            | top-center-7  | top-center |
+            | top-center-8  | top-center |
+            | top-center-9  | top-center |
+            | top-center-10 | top-center |
             | top-right-1   | top-right  |
             | top-right-2   | top-right  |
             | top-right-3   | top-right  |
+            | top-right-4   | top-right  |
+            | top-right-5   | top-right  |
+            | top-right-6   | top-right  |
+            | top-right-7   | top-right  |
+            | top-right-8   | top-right  |
+            | top-right-9   | top-right  |
+            | top-right-10  | top-right  |
             | top-left-1    | top-left   |
             | top-left-2    | top-left   |
             | top-left-3    | top-left   |
+            | top-left-4    | top-left   |
+            | top-left-5    | top-left   |
+            | top-left-6    | top-left   |
+            | top-left-7    | top-left   |
+            | top-left-8    | top-left   |
+            | top-left-9    | top-left   |
+            | top-left-10   | top-left   |
         Then Recently created banner slots are available for using and bound to apropriate slots:
             | banner        | slot       |
             | top-center-1  | top-center |
             | top-center-2  | top-center |
             | top-center-3  | top-center |
+            | top-center-4  | top-center |
+            | top-center-5  | top-center |
+            | top-center-6  | top-center |
+            | top-center-7  | top-center |
+            | top-center-8  | top-center |
+            | top-center-9  | top-center |
+            | top-center-10 | top-center |
             | top-right-1   | top-right  |
             | top-right-2   | top-right  |
             | top-right-3   | top-right  |
+            | top-right-4   | top-right  |
+            | top-right-5   | top-right  |
+            | top-right-6   | top-right  |
+            | top-right-7   | top-right  |
+            | top-right-8   | top-right  |
+            | top-right-9   | top-right  |
+            | top-right-10  | top-right  |
             | top-left-1    | top-left   |
             | top-left-2    | top-left   |
             | top-left-3    | top-left   |
+            | top-left-4    | top-left   |
+            | top-left-5    | top-left   |
+            | top-left-6    | top-left   |
+            | top-left-7    | top-left   |
+            | top-left-8    | top-left   |
+            | top-left-9    | top-left   |
+            | top-left-10   | top-left   |
 
     Scenario: Client makes query about banner show
         When Client makes query about banner show for following slots and social groups:
@@ -62,11 +104,47 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
             | top-right  | adults    |
             | top-left   | elderly   |
             | top-center | teenagers |
-            | top-right  | adults    |
-            | top-left   | elderly   |
             | top-center | teenagers |
             | top-right  | adults    |
+            | top-right  | adults    |
             | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-left   | elderly   |
+            | top-left   | elderly   |            
         Then Client receives notification about banner show
 
     Scenario: Client registers banner click events

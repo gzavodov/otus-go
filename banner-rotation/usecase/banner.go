@@ -203,16 +203,19 @@ func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {
 func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 	key := fmt.Sprintf("%d:%d", slotID, groupID)
 
-	c.lockMu.Lock()
-	isLocked := c.locks[key]
-	if !isLocked {
-		c.locks[key] = true
-	}
-	c.lockMu.Unlock()
+	for {
+		c.lockMu.Lock()
+		isLockAcquired := !c.locks[key]
+		if isLockAcquired {
+			c.locks[key] = true
+		}
+		c.lockMu.Unlock()
 
-	if isLocked {
+		if isLockAcquired {
+			break
+		}
+
 		time.Sleep(lockWaitInterval * time.Millisecond)
-		return c.Choose(slotID, groupID)
 	}
 
 	defer func() {
