@@ -224,10 +224,12 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 		c.lockMu.Unlock()
 	}()
 
+	c.algMu.RLock()
 	var alg algorithm.MultiArmedBandit
 	if _, ok := c.algorithmCache[groupID]; ok {
 		alg = c.algorithmCache[groupID][slotID]
 	}
+	c.algMu.RUnlock()
 
 	if alg == nil {
 		statList, err := c.statisticsRepo.GetRotationStatistics(slotID, groupID)
