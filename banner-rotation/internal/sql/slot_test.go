@@ -24,7 +24,7 @@ func TestSlotRepository(t *testing.T) {
 
 	t.Run("SlotRepository::Create",
 		func(t *testing.T) {
-			source := &model.Slot{Caption: "Creation Test"}
+			source := &model.Slot{BaseReference: model.BaseReference{Caption: "Creation Test"}}
 
 			if err := repo.Create(source); err != nil {
 				t.Fatal(err)
@@ -46,7 +46,7 @@ func TestSlotRepository(t *testing.T) {
 
 	t.Run("SlotRepository::Read",
 		func(t *testing.T) {
-			source := &model.Slot{Caption: "Reading Test"}
+			source := &model.Slot{BaseReference: model.BaseReference{Caption: "Reading Test"}}
 
 			if err := repo.Create(source); err != nil {
 				t.Fatal(err)
@@ -68,7 +68,7 @@ func TestSlotRepository(t *testing.T) {
 
 	t.Run("SlotRepository::Update",
 		func(t *testing.T) {
-			source := &model.Slot{Caption: "Test"}
+			source := &model.Slot{BaseReference: model.BaseReference{Caption: "Test"}}
 
 			err := repo.Create(source)
 			if err != nil {
@@ -97,7 +97,7 @@ func TestSlotRepository(t *testing.T) {
 
 	t.Run("SlotRepository::Delete",
 		func(t *testing.T) {
-			source := &model.Slot{Caption: "Deletion Test"}
+			source := &model.Slot{BaseReference: model.BaseReference{Caption: "Deletion Test"}}
 
 			err := repo.Create(source)
 			if err != nil {

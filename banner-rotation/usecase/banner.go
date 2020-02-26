@@ -3,14 +3,17 @@ package usecase
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/gzavodov/otus-go/banner-rotation/algorithm"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
 	"github.com/gzavodov/otus-go/banner-rotation/repository"
 )
 
-const lockWaitInterval = 50
+type AlgorithmLock struct {
+	IsBusy      bool
+	WaiterCount int
+	WaitChannel chan struct{}
+}
 
 func NewBannerUsecase(
 	bannerRepo repository.BannerRepository,
@@ -24,7 +27,7 @@ func NewBannerUsecase(
 		statisticsRepo:  statisticsRepo,
 		algorithmTypeID: algorithmTypeID,
 		algorithmCache:  make(map[int64]map[int64]algorithm.MultiArmedBandit),
-		locks:           make(map[string]bool),
+		locks:           make(map[string]*AlgorithmLock),
 		algMu:           &sync.RWMutex{},
 		lockMu:          &sync.RWMutex{},
 	}
@@ -36,7 +39,7 @@ type Banner struct {
 	statisticsRepo  repository.StatisticsRepository
 	algorithmTypeID int
 
-	locks          map[string]bool
+	locks          map[string]*AlgorithmLock
 	algorithmCache map[int64]map[int64]algorithm.MultiArmedBandit
 	lockMu         *sync.RWMutex
 	algMu          *sync.RWMutex
@@ -46,16 +49,16 @@ func (c *Banner) Create(m *model.Banner) error {
 	return c.bannerRepo.Create(m)
 }
 
-func (c *Banner) Read(ID int64) (*model.Banner, error) {
-	return c.bannerRepo.Read(ID)
+func (c *Banner) Read(id int64) (*model.Banner, error) {
+	return c.bannerRepo.Read(id)
 }
 
 func (c *Banner) Update(m *model.Banner) error {
 	return c.bannerRepo.Update(m)
 }
 
-func (c *Banner) Delete(ID int64) error {
-	if err := c.bannerRepo.Delete(ID); err != nil {
+func (c *Banner) Delete(id int64) error {
+	if err := c.bannerRepo.Delete(id); err != nil {
 		return err
 	}
 
@@ -68,7 +71,7 @@ func (c *Banner) Delete(ID int64) error {
 
 			count := alg.GetArmCount()
 			for i := 0; i < count; i++ {
-				if alg.GetArm(i).(*model.Statistics).BannerID == ID {
+				if alg.GetArm(i).(*model.Statistics).BannerID == id {
 					alg.RemoveArm(i)
 					break
 				}
@@ -202,27 +205,8 @@ func (c *Banner) RegisterClick(bannerID int64, groupID int64) error {
 
 func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 	key := fmt.Sprintf("%d:%d", slotID, groupID)
-
-	for {
-		c.lockMu.Lock()
-		isLockAcquired := !c.locks[key]
-		if isLockAcquired {
-			c.locks[key] = true
-		}
-		c.lockMu.Unlock()
-
-		if isLockAcquired {
-			break
-		}
-
-		time.Sleep(lockWaitInterval * time.Millisecond)
-	}
-
-	defer func() {
-		c.lockMu.Lock()
-		delete(c.locks, key)
-		c.lockMu.Unlock()
-	}()
+	c.waitForLock(key)
+	defer c.releaseLock(key)
 
 	c.algMu.RLock()
 	var alg algorithm.MultiArmedBandit
@@ -264,8 +248,79 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 	}
 
 	bannerID := alg.GetArm(index).(*model.Statistics).BannerID
-	if err := c.statisticsRepo.IncrementNumberOfShows(bannerID, groupID); err != nil {
+
+	if err := c.incrementNumberOfShows(bannerID, groupID); err != nil {
 		return 0, err
+	}
+
+	return bannerID, nil
+}
+
+func (c *Banner) waitForLock(key string) {
+	var ch chan struct{}
+
+	//isAcquired := false
+
+	c.lockMu.Lock()
+	lock, ok := c.locks[key]
+	if !ok {
+		lock = &AlgorithmLock{IsBusy: true, WaiterCount: 0, WaitChannel: make(chan struct{})}
+		c.locks[key] = lock
+		//isAcquired = true
+	} else if !lock.IsBusy {
+		lock.IsBusy = true
+		//isAcquired = true
+	} else {
+		lock.WaiterCount++
+		ch = lock.WaitChannel
+	}
+	c.lockMu.Unlock()
+
+	if ch == nil {
+		return
+	}
+
+	for {
+		<-ch
+
+		isAcquired := false
+
+		c.lockMu.Lock()
+		if !lock.IsBusy {
+			lock.WaiterCount--
+			lock.IsBusy = true
+
+			isAcquired = true
+		}
+		c.lockMu.Unlock()
+
+		if isAcquired {
+			break
+		}
+	}
+}
+
+func (c *Banner) releaseLock(key string) {
+	var ch chan struct{}
+
+	c.lockMu.Lock()
+	lock, ok := c.locks[key]
+	if ok {
+		lock.IsBusy = false
+		if lock.WaiterCount > 0 {
+			ch = lock.WaitChannel
+		}
+	}
+	c.lockMu.Unlock()
+
+	if ch != nil {
+		ch <- struct{}{}
+	}
+}
+
+func (c *Banner) incrementNumberOfShows(bannerID int64, groupID int64) error {
+	if err := c.statisticsRepo.IncrementNumberOfShows(bannerID, groupID); err != nil {
+		return err
 	}
 
 	c.algMu.Lock()
@@ -285,5 +340,5 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 	}
 	c.algMu.Unlock()
 
-	return bannerID, nil
+	return nil
 }

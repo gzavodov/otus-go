@@ -28,10 +28,9 @@ func TestGroup(t *testing.T) {
 
 	groupRepo := sql.NewGroupRepository(ctx, conf.RepositoryDSN)
 	groupUsecase := usecase.NewGroupUsecase(groupRepo)
-
-	groupHandler := &Group{
-		Handler: endpoint.Handler{Name: "Group", ServiceName: "Test"},
-		ucase:   groupUsecase,
+	groupHandler := &EntityHandler{
+		Accessor: &Group{ucase: groupUsecase},
+		Handler:  endpoint.Handler{Name: "Group", ServiceName: "Test"},
 	}
 
 	var sourceGroup *model.Group

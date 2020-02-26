@@ -5,7 +5,7 @@ networks:
 
 services:
   postgres:
-    image: postgres:12.1
+    image: postgres:12-alpine
     restart: on-failure
     ports:
       - 5432:5432
@@ -19,15 +19,14 @@ services:
       - ./db/migration/group.sql:/docker-entrypoint-initdb.d/3_group.sql
       - ./db/migration/slot.sql:/docker-entrypoint-initdb.d/4_slot.sql
       - ./db/migration/statistics.sql:/docker-entrypoint-initdb.d/5_statistics.sql
+    entrypoint: ["docker-entrypoint.sh", "-c", "shared_buffers=64MB", "-c", "max_connections=128"]
     networks:
       - banner_rotation_nw
   rabbitmq:
-    image: rabbitmq:3.7-management
+    image: rabbitmq:3.7
     ports:
-      - 15672:15672
       - 5672:5672
     expose:
-      - 15672
       - 5672
     networks:
       - banner_rotation_nw
@@ -45,7 +44,7 @@ services:
       - 8390
     env_file:
       - ./env/api.env
-    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- /banner-rotation/app --config=config.json"]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh -s -t 60 rabbitmq:5672 -- /banner-rotation/app --config=config.json"]
     networks:
       - banner_rotation_nw
   banner_rotation_test:
@@ -53,10 +52,10 @@ services:
       context: ./
       dockerfile: Dockerfile-test
     depends_on:
-      - postgres
+      - banner_rotation_api
       - rabbitmq
     env_file:
       - ./env/test.env
-    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh banner_rotation_api:8390 -- /banner-rotation/app "]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh -s -t 60 banner_rotation_api:8390 -- /banner-rotation/app "]
     networks:
        - banner_rotation_nw

@@ -33,16 +33,16 @@ func main() {
 		},
 	)
 	if err != nil {
-		log.Fatalf("Could not load configuration: %v", err)
+		log.Fatalf("could not load configuration: %v", err)
 	}
 
 	appLogger, err := logger.Create(conf.LogFilePath, conf.LogLevel)
 	if err != nil {
-		log.Fatalf("Could not initialize logger: %v", err)
+		log.Fatalf("could not initialize logger: %v", err)
 	}
 	defer func() {
 		if err := appLogger.Sync(); err != nil {
-			log.Fatalf("Could not flush logger write buffers: %v", err)
+			log.Fatalf("could not flush logger write buffers: %v", err)
 		}
 	}()
 
@@ -65,6 +65,6 @@ func main() {
 
 	log.Printf("Starting %s service...\n", appService.GetServiceName())
 	if err := appService.Start(); err != nil {
-		log.Fatalf("Could not start %s service: %v", appService.GetServiceName(), err)
+		log.Fatalf("could not start %s service: %v", appService.GetServiceName(), err)
 	}
 }

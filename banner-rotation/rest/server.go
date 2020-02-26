@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const PostMethod = "POST"
+
 //NewServer Creates new Web server
 func NewServer(
 	address string,
@@ -36,13 +38,13 @@ func NewServer(
 type Server struct {
 	server *http.Server
 
-	bannerHandler *Banner
+	bannerHandler *BannerHandler
 	bannerUsecase *usecase.Banner
 
-	slotHandler *Slot
+	slotHandler *EntityHandler
 	slotUsecase *usecase.Slot
 
-	groupHandler *Group
+	groupHandler *EntityHandler
 	groupUsecase *usecase.Group
 
 	notificationChannel queue.NotificationChannel
@@ -54,15 +56,8 @@ type Server struct {
 func (s *Server) Start() error {
 	serverMux := http.NewServeMux()
 
-	s.bannerHandler = &Banner{
-		Handler: endpoint.Handler{
-			Name:                "Banner",
-			ServiceName:         s.Name,
-			Logger:              s.Logger,
-			NotificationChannel: s.notificationChannel,
-		},
-		ucase: s.bannerUsecase,
-	}
+	s.bannerHandler = NewBannerHandler(s.bannerUsecase, s.Name, s.notificationChannel, s.Logger)
+
 	serverMux.HandleFunc("/banner/create", s.bannerHandler.Create)
 	serverMux.HandleFunc("/banner/read", s.bannerHandler.Read)
 	serverMux.HandleFunc("/banner/update", s.bannerHandler.Update)
@@ -76,14 +71,14 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/banner/register-click", s.bannerHandler.RegisterClick)
 	serverMux.HandleFunc("/banner/choose", s.bannerHandler.Choose)
 
-	s.slotHandler = &Slot{
+	s.slotHandler = &EntityHandler{
+		Accessor: &Slot{ucase: s.slotUsecase},
 		Handler: endpoint.Handler{
 			Name:                "Slot",
 			ServiceName:         s.Name,
 			Logger:              s.Logger,
 			NotificationChannel: s.notificationChannel,
 		},
-		ucase: s.slotUsecase,
 	}
 	serverMux.HandleFunc("/slot/create", s.slotHandler.Create)
 	serverMux.HandleFunc("/slot/read", s.slotHandler.Read)
@@ -91,14 +86,14 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/slot/delete", s.slotHandler.Delete)
 	serverMux.HandleFunc("/slot/get-by-caption", s.slotHandler.GetByCaption)
 
-	s.groupHandler = &Group{
+	s.groupHandler = &EntityHandler{
+		Accessor: &Group{ucase: s.groupUsecase},
 		Handler: endpoint.Handler{
 			Name:                "Group",
 			ServiceName:         s.Name,
 			Logger:              s.Logger,
 			NotificationChannel: s.notificationChannel,
 		},
-		ucase: s.groupUsecase,
 	}
 	serverMux.HandleFunc("/group/create", s.groupHandler.Create)
 	serverMux.HandleFunc("/group/read", s.groupHandler.Read)

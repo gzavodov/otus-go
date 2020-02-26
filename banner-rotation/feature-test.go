@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
+	"math/rand"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/cucumber/godog/gherkin"
 	"github.com/gzavodov/otus-go/banner-rotation/config"
@@ -13,6 +16,7 @@ import (
 	"github.com/gzavodov/otus-go/banner-rotation/internal/testify"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
 	"github.com/gzavodov/otus-go/banner-rotation/queue"
+	"golang.org/x/sync/errgroup"
 )
 
 //DefaultNotificationTimeout Notification Timeout
@@ -53,16 +57,20 @@ type FeatureTest struct {
 	Choises              []*BannerChoise
 }
 
-//Start run services and clients are requred for test process
+//Start run services and clients are required for test process
 func (t *FeatureTest) Start(outline *gherkin.Feature) {
 	go func(client *queue.NotificationClient) {
-		if client != nil {
-			client.Start()
+		if client == nil {
+			return
+		}
+
+		if err := client.Start(); err != nil {
+			log.Fatalf("failed to start notification client: %v", err)
 		}
 	}(t.NotificationListener)
 }
 
-//Stop halt services and clients are requred for test process
+//Stop halt services and clients are required for test process
 func (t *FeatureTest) Stop(outline *gherkin.Feature) {
 	go func(client *queue.NotificationClient) {
 		if client != nil {
@@ -235,6 +243,7 @@ func (t *FeatureTest) VerifyBannersFromTable(table *gherkin.DataTable) error {
 
 //ChooseBanner selects banners for show by the data table
 func (t *FeatureTest) ChooseBanner(table *gherkin.DataTable) error {
+	g, _ := errgroup.WithContext(context.Background())
 	for i := 1; i < len(table.Rows); i++ {
 		data := url.Values{}
 
@@ -252,21 +261,29 @@ func (t *FeatureTest) ChooseBanner(table *gherkin.DataTable) error {
 
 		data.Set("slotId", strconv.FormatInt(slot.ID, 10))
 		data.Set("groupId", strconv.FormatInt(group.ID, 10))
-		var bannerID int64
-		if err := t.RunEntityActionWithResult("banner", "choose", data, &bannerID); err != nil {
-			return err
-		}
 
-		if bannerID <= 0 {
-			return errors.New("failed to get banner for show")
-		}
+		g.Go(
+			func() error {
+				var bannerID int64
+				if err := t.RunEntityActionWithResult("banner", "choose", data, &bannerID); err != nil {
+					return err
+				}
 
-		t.Choises = append(
-			t.Choises,
-			&BannerChoise{BannerID: bannerID, SlotID: slot.ID, GroupID: group.ID},
+				if bannerID <= 0 {
+					return errors.New("failed to get banner for show")
+				}
+
+				t.Choises = append(
+					t.Choises,
+					&BannerChoise{BannerID: bannerID, SlotID: slot.ID, GroupID: group.ID},
+				)
+
+				return nil
+			},
 		)
+		time.Sleep(50 + time.Duration(rand.Int31n(25))*time.Millisecond)
 	}
-	return nil
+	return g.Wait()
 }
 
 //RegisterBannerClick selects banners for show by the data table

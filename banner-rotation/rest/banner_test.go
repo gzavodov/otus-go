@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gzavodov/otus-go/banner-rotation/config"
-	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/sql"
 	"github.com/gzavodov/otus-go/banner-rotation/internal/testify"
 	"github.com/gzavodov/otus-go/banner-rotation/model"
@@ -33,11 +32,7 @@ func TestBanner(t *testing.T) {
 	statisticsRepo := sql.NewStatisticsRepository(ctx, conf.RepositoryDSN)
 
 	bannerUsecase := usecase.NewBannerUsecase(bannerRepo, bindingRepo, statisticsRepo, conf.AlgorithmTypeID)
-
-	bannerHandler := &Banner{
-		Handler: endpoint.Handler{Name: "Banner", ServiceName: "Test"},
-		ucase:   bannerUsecase,
-	}
+	bannerHandler := NewBannerHandler(bannerUsecase, "Test", nil, nil)
 
 	var sourceBanner *model.Banner
 	form := testify.Form{}

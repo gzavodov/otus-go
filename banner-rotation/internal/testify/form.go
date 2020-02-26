@@ -29,7 +29,7 @@ func (f *Form) EmulatePost(url string, data url.Values, handler http.HandlerFunc
 	req.Header.Add("Content-Length", strconv.Itoa(len(encodedData)))
 
 	rec := httptest.NewRecorder()
-	http.HandlerFunc(handler).ServeHTTP(rec, req)
+	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		return nil, errors.New(rec.Body.String())
 	}

@@ -6,8 +6,7 @@ import (
 
 //Algorithm Type
 const (
-	TypeUnknown       = 0
-	TypeUCB1          = 1
+	TypeUCB1 = 1
 	//TypeEpsilonGreedy = 2
 )
 

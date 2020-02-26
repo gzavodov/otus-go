@@ -1,196 +1,44 @@
 package rest
 
 import (
-	"errors"
-	"net/http"
-
-	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
+	"github.com/gzavodov/otus-go/banner-rotation/model"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 )
 
 type Slot struct {
 	ucase *usecase.Slot
-
-	endpoint.Handler
 }
 
-//Create creates new slot
-func (h *Slot) Create(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-	m, err := form.ParseSlot()
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := h.ucase.Create(m); err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h *Slot) ParseEntity(form *RequestForm) (interface{}, error) {
+	return form.ParseSlot()
 }
 
-//Read reads slot by ID
-func (h *Slot) Read(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-	ID, err := form.ParseInt64("ID", 0)
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if ID <= 0 {
-		err = errors.New("The ID must be defined and be greater then zero")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	m, err := h.ucase.Read(ID)
-	if err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h *Slot) ParseEntityIdentity(form *RequestForm) (interface{}, error) {
+	return form.ParseInt64("ID", 0)
 }
 
-//Update updates slot
-func (h *Slot) Update(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-
-	ID, err := form.ParseInt64("ID", 0)
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if ID <= 0 {
-		err = errors.New("The ID must be defined and be greater then zero")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	m, err := form.ParseSlot()
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	m.ID = ID
-
-	if err := h.ucase.Update(m); err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h *Slot) ParseEntityCaption(form *RequestForm) (string, error) {
+	return form.ParseString("caption", "")
 }
 
-//Delete deletes slot by ID
-func (h *Slot) Delete(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-	ID, err := form.ParseInt64("ID", 0)
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if ID <= 0 {
-		err = errors.New("The ID must be defined and be greater then zero")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := h.ucase.Delete(ID); err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+func (h *Slot) CreateEntity(entity interface{}) error {
+	return h.ucase.Create(entity.(*model.Slot))
 }
 
-//GetByCaption returns slot by caption
-func (h *Slot) GetByCaption(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
+func (h *Slot) ReadEntity(identity interface{}) (interface{}, error) {
+	return h.ucase.Read(identity.(int64))
+}
 
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
+func (h *Slot) UpdateEntity(identity interface{}, entity interface{}) error {
+	m := entity.(*model.Slot)
+	m.ID = identity.(int64)
+	return h.ucase.Update(m)
+}
 
-	form := RequestForm{Request: r}
-	caption, err := form.ParseString("caption", "")
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+func (h *Slot) DeleteEntity(identity interface{}) error {
+	return h.ucase.Delete(identity.(int64))
+}
 
-	if caption == "" {
-		err = errors.New("The caption must be defined and be not empty")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	m, err := h.ucase.GetByCaption(caption)
-	if err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h Slot) GetEntityByCaption(caption string) (interface{}, error) {
+	return h.ucase.GetByCaption(caption)
 }

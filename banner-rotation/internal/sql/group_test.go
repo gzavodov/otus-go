@@ -24,7 +24,7 @@ func TestGroupRepository(t *testing.T) {
 
 	t.Run("GroupRepository::Create",
 		func(t *testing.T) {
-			source := &model.Group{Caption: "Creation Test"}
+			source := &model.Group{BaseReference: model.BaseReference{Caption: "Creation Test"}}
 
 			if err := repo.Create(source); err != nil {
 				t.Fatal(err)
@@ -46,7 +46,7 @@ func TestGroupRepository(t *testing.T) {
 
 	t.Run("GroupRepository::Read",
 		func(t *testing.T) {
-			source := &model.Group{Caption: "Reading Test"}
+			source := &model.Group{BaseReference: model.BaseReference{Caption: "Reading Test"}}
 
 			if err := repo.Create(source); err != nil {
 				t.Fatal(err)
@@ -68,7 +68,7 @@ func TestGroupRepository(t *testing.T) {
 
 	t.Run("GroupRepository::Update",
 		func(t *testing.T) {
-			source := &model.Group{Caption: "Test"}
+			source := &model.Group{BaseReference: model.BaseReference{Caption: "Test"}}
 
 			err := repo.Create(source)
 			if err != nil {
@@ -97,7 +97,7 @@ func TestGroupRepository(t *testing.T) {
 
 	t.Run("GroupRepository::Delete",
 		func(t *testing.T) {
-			source := &model.Group{Caption: "Deletion Test"}
+			source := &model.Group{BaseReference: model.BaseReference{Caption: "Deletion Test"}}
 
 			err := repo.Create(source)
 			if err != nil {

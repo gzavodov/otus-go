@@ -90,7 +90,7 @@ type Error struct {
 	innerErr error
 }
 
-//GetCode retuns repository error code
+//GetCode returns repository error code
 func (e *Error) GetCode() int { return e.code }
 
 //Unwrap implementation of Unwrap interface

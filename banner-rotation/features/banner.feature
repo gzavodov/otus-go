@@ -64,7 +64,7 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
             | top-left-8    | top-left   |
             | top-left-9    | top-left   |
             | top-left-10   | top-left   |
-        Then Recently created banner slots are available for using and bound to apropriate slots:
+        Then Recently created banner slots are available for using and bound to appropriate slots:
             | banner        | slot       |
             | top-center-1  | top-center |
             | top-center-2  | top-center |
@@ -101,9 +101,6 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
         When Client makes query about banner show for following slots and social groups:
             | slot       | group     |
             | top-center | teenagers |
-            | top-right  | adults    |
-            | top-left   | elderly   |
-            | top-center | teenagers |
             | top-center | teenagers |
             | top-right  | adults    |
             | top-right  | adults    |
@@ -144,7 +141,7 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
             | top-left   | elderly   |
             | top-left   | elderly   |
             | top-left   | elderly   |
-            | top-left   | elderly   |            
+            | top-left   | elderly   |
         Then Client receives notification about banner show
 
     Scenario: Client registers banner click events

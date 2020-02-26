@@ -2,22 +2,22 @@ package sql
 
 import (
 	"context"
-	"time"
 
 	"github.com/gzavodov/otus-go/banner-rotation/repository"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 //BaseRepository represents Base PostgreSQL repository
 type BaseRepository struct {
 	dataSourceName string
-	conn           *pgx.Conn
+	connPool       *pgxpool.Pool
 	ctx            context.Context
 }
 
 //Connect try to connect to PostgreSQL server
 func (r *BaseRepository) Connect() error {
-	if r.conn != nil {
+	if r.connPool != nil {
 		return nil
 	}
 
@@ -28,7 +28,7 @@ func (r *BaseRepository) Connect() error {
 		)
 	}
 
-	config, err := pgx.ParseConfig(r.dataSourceName)
+	config, err := pgxpool.ParseConfig(r.dataSourceName)
 	if err != nil {
 		return repository.WrapErrorf(
 			repository.ErrorInvalidConfiguration,
@@ -37,23 +37,12 @@ func (r *BaseRepository) Connect() error {
 		)
 	}
 
-	r.conn, err = pgx.ConnectConfig(r.ctx, config)
+	r.connPool, err = pgxpool.ConnectConfig(r.ctx, config)
 	if err != nil {
 		return repository.WrapErrorf(
 			repository.ErrorInvalidConfiguration,
 			err,
 			"failed to connect to PostgreSQL server",
-		)
-	}
-
-	ctx, cancel := context.WithTimeout(r.ctx, 3*time.Second)
-	defer cancel()
-
-	if err := r.conn.Ping(ctx); err != nil {
-		return repository.WrapErrorf(
-			repository.ErrorFailedToConnect,
-			err,
-			"failed to ping to PostgreSQL server",
 		)
 	}
 
@@ -66,7 +55,7 @@ func (r *BaseRepository) QueryRow(query string, params ...interface{}) (pgx.Row,
 		return nil, err
 	}
 
-	return r.conn.QueryRow(r.ctx, query, params...), nil
+	return r.connPool.QueryRow(r.ctx, query, params...), nil
 }
 
 //Query is a wrapper over pgx Query
@@ -75,7 +64,7 @@ func (r *BaseRepository) Query(query string, params ...interface{}) (pgx.Rows, e
 		return nil, err
 	}
 
-	return r.conn.Query(r.ctx, query, params...)
+	return r.connPool.Query(r.ctx, query, params...)
 }
 
 //Execute is a wrapper over pgx Exec
@@ -84,7 +73,7 @@ func (r *BaseRepository) Execute(query string, params ...interface{}) (bool, err
 		return false, err
 	}
 
-	res, err := r.conn.Exec(r.ctx, query, params...)
+	res, err := r.connPool.Exec(r.ctx, query, params...)
 	if err != nil {
 		return false, err
 	}

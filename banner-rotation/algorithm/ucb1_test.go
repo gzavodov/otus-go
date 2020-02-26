@@ -1,68 +1,86 @@
 package algorithm
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 )
 
-func TestUCB1Coverage(t *testing.T) {
-	count := 1000
-	banditArms := make([]BanditArm, 0, count)
-	for i := 0; i < count; i++ {
-		banditArms = append(banditArms, &BaseBanditArm{})
-	}
+const countIncrement = 1
+const awardIncrement = 1
+const randomizerLimit = 10
+const randomizerThreshold = 5
 
-	alg, err := NewUCB1(banditArms)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for i := 0; i < count; i++ {
-		index := alg.ResolveArmIndex()
-		if index < 0 {
-			t.Error(err)
-		}
-
-		banditArms[index].SetCount(banditArms[index].GetCount() + 1)
-	}
-
-	omittedCount := 0
-	for i := 0; i < count; i++ {
-		if banditArms[i].GetCount() == 0 {
-			omittedCount++
-		}
-	}
-
-	if omittedCount > 0 {
-		t.Fatal(fmt.Errorf("it is expected that all items will be touched after first pass, but %d items are untouched", omittedCount))
-	}
-}
-func TestUCB1Optimality(t *testing.T) {
-	armCount := 1000
+func createBandit(armCount int) (*UCB1, error) {
 	banditArms := make([]BanditArm, 0, armCount)
 	for i := 0; i < armCount; i++ {
 		banditArms = append(banditArms, &BaseBanditArm{})
 	}
 
-	alg, err := NewUCB1(banditArms)
+	return NewUCB1(banditArms)
+}
+
+func play(bandit *UCB1, tryCount int) error {
+	count := len(bandit.Arms)
+	if tryCount > count {
+		tryCount = count
+	}
+
+	for i := 0; i < tryCount; i++ {
+		index := bandit.ResolveArmIndex()
+		if index < 0 {
+			return errors.New("could not resolve arm index")
+		}
+
+		bandit.Arms[index].SetCount(bandit.Arms[index].GetCount() + countIncrement)
+
+		rand.Seed(time.Now().UnixNano())
+		if rand.Int31n(randomizerLimit) >= randomizerThreshold {
+			bandit.Arms[index].SetReward(bandit.Arms[index].GetReward() + awardIncrement)
+		}
+	}
+
+	return nil
+}
+
+func TestUCB1Coverage(t *testing.T) {
+	armCount := 1000
+
+	bandit, err := createBandit(armCount)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = play(bandit, len(bandit.Arms))
+	if err != nil {
+		t.Error(err)
+	}
+
+	omittedArmCount := 0
+	for i := 0; i < armCount; i++ {
+		if bandit.Arms[i].GetCount() == 0 {
+			omittedArmCount++
+		}
+	}
+
+	if omittedArmCount > 0 {
+		t.Fatal(fmt.Errorf("it is expected that all items will be touched after first pass, but %d items are untouched", omittedArmCount))
+	}
+}
+func TestUCB1Optimality(t *testing.T) {
+	armCount := 1000
+
+	bandit, err := createBandit(armCount)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tryCount := armCount * 10
-	for i := 0; i < tryCount; i++ {
-		index := alg.ResolveArmIndex()
-		if index < 0 {
-			t.Error(err)
-		}
-
-		banditArms[index].SetCount(banditArms[index].GetCount() + 1)
-		rand.Seed(time.Now().UnixNano())
-		if rand.Int31n(10) >= 5 {
-			banditArms[index].SetReward(banditArms[index].GetReward() + 1)
-		}
+	err = play(bandit, tryCount)
+	if err != nil {
+		t.Error(err)
 	}
 
 	var totalCount int64
@@ -74,13 +92,13 @@ func TestUCB1Optimality(t *testing.T) {
 	var maxRewardIndex int
 
 	for i := 0; i < armCount; i++ {
-		count := banditArms[i].GetCount()
+		count := bandit.Arms[i].GetCount()
 		if maxCount < count {
 			maxCount = count
 			maxCountIndex = i
 		}
 
-		reward := banditArms[i].GetReward()
+		reward := bandit.Arms[i].GetReward()
 		if maxReward < reward {
 			maxReward = reward
 			maxRewardIndex = i

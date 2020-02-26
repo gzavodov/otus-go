@@ -16,6 +16,8 @@ type UCB1 struct {
 	mu   sync.RWMutex
 }
 
+const UCB1Factor = 2.0
+
 //ResolveArmIndex resolves an arm index that exploits if the value is more than the epsilon threshold, and explore if the value is less than epsilon
 func (b *UCB1) ResolveArmIndex() int {
 	b.mu.RLock()
@@ -37,7 +39,7 @@ func (b *UCB1) ResolveArmIndex() int {
 	}
 
 	values := make([]float64, quantity)
-	numerator := 2.0 * math.Log(float64(sum(counts)))
+	numerator := UCB1Factor * math.Log(float64(sum(counts)))
 	for i := 0; i < quantity; i++ {
 		denominator := float64(counts[i])
 		values[i] = rewards[i] + math.Sqrt(numerator/denominator)
@@ -46,8 +48,24 @@ func (b *UCB1) ResolveArmIndex() int {
 	return maxIndex(values)
 }
 
-//RegisterArmReward will update an arm with specified reward value,
-//e.g. click = 1, no click = 0
+//RegisterArmTouch will increment arm touch count
+func (b *UCB1) RegisterArmTouch(armIndex int) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if armIndex < 0 || armIndex >= len(b.Arms) {
+		return ErrorArmIndexOutOfRange
+	}
+
+	currentReward := b.Arms[armIndex].GetReward()
+	currentCount := b.Arms[armIndex].GetCount()
+
+	b.Arms[armIndex].SetReward(currentReward * float64(currentCount) / float64(currentCount+1))
+	b.Arms[armIndex].SetCount(currentCount + 1)
+	return nil
+}
+
+//RegisterArmReward will update an arm with specified reward value
 func (b *UCB1) RegisterArmReward(armIndex int, reward float64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -60,11 +78,10 @@ func (b *UCB1) RegisterArmReward(armIndex int, reward float64) error {
 		return ErrorInvalidReward
 	}
 
-	currentCount := b.Arms[armIndex].GetCount()
 	currentReward := b.Arms[armIndex].GetReward()
+	currentCount := b.Arms[armIndex].GetCount()
 
-	b.Arms[armIndex].SetCount(currentCount + 1)
-	b.Arms[armIndex].SetReward((currentReward*float64(currentCount) + reward) / float64(currentCount+1))
+	b.Arms[armIndex].SetReward((currentReward*float64(currentCount) + reward) / float64(currentCount))
 
 	return nil
 }

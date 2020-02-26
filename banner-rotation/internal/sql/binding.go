@@ -21,7 +21,7 @@ func NewBindingRepository(ctx context.Context, dataSourceName string) repository
 	return &BindingRepository{BaseRepository{ctx: ctx, dataSourceName: dataSourceName}}
 }
 
-//Create creates new Binding in databse
+//Create creates new Binding in database
 //If succseed ID field will be updated
 func (r *BindingRepository) Create(m *model.Binding) error {
 	if m == nil {
@@ -50,15 +50,15 @@ func (r *BindingRepository) Create(m *model.Binding) error {
 	return nil
 }
 
-//Read reads Banner Binding from databse by ID
-func (r *BindingRepository) Read(ID int64) (*model.Binding, error) {
-	if ID <= 0 {
+//Read reads Banner Binding from database by ID
+func (r *BindingRepository) Read(id int64) (*model.Binding, error) {
+	if id <= 0 {
 		return nil, repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
 	row, err := r.QueryRow(
 		`SELECT id, banner_id, slot_id FROM banner_binding WHERE id = $1`,
-		ID,
+		id,
 	)
 
 	if err != nil {
@@ -68,7 +68,7 @@ func (r *BindingRepository) Read(ID int64) (*model.Binding, error) {
 	m := &model.Binding{}
 	if err := row.Scan(&m.ID, &m.BannerID, &m.SlotID); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, repository.NewNotFoundError("failed to find record with ID: %d", ID)
+			return nil, repository.NewNotFoundError("failed to find record with id: %d", id)
 		}
 
 		return nil, repository.NewReadingError(err, "failed to fetch query result")
@@ -77,7 +77,7 @@ func (r *BindingRepository) Read(ID int64) (*model.Binding, error) {
 	return m, nil
 }
 
-//Update modifies Binding in databse
+//Update modifies Binding in database
 func (r *BindingRepository) Update(m *model.Binding) error {
 	if m == nil {
 		return repository.NewInvalidArgumentError("first parameter must be not null pointer")
@@ -115,19 +115,19 @@ func (r *BindingRepository) Update(m *model.Binding) error {
 	return nil
 }
 
-//Delete removes Binding from databse
-func (r *BindingRepository) Delete(ID int64) error {
-	if ID <= 0 {
+//Delete removes Binding from database
+func (r *BindingRepository) Delete(id int64) error {
+	if id <= 0 {
 		return repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	result, err := r.Execute(`DELETE FROM banner_binding WHERE id = $1`, ID)
+	result, err := r.Execute(`DELETE FROM banner_binding WHERE id = $1`, id)
 	if err != nil {
-		return repository.NewDeletionError(err, "failed to execute delete query for record with ID: %d", ID)
+		return repository.NewDeletionError(err, "failed to execute delete query for record with id: %d", id)
 	}
 
 	if !result {
-		return repository.NewNotFoundError("failed to find record with ID: %d", ID)
+		return repository.NewNotFoundError("failed to find record with id: %d", id)
 	}
 	return nil
 }
@@ -267,12 +267,12 @@ func (r *BindingRepository) GetSlotBindings(slotID int64) ([]*model.Binding, err
 }
 
 //IsExists check if repository contains banner with specified ID
-func (r *BindingRepository) IsExists(ID int64) (bool, error) {
-	if ID <= 0 {
+func (r *BindingRepository) IsExists(id int64) (bool, error) {
+	if id <= 0 {
 		return false, repository.NewInvalidArgumentError("first parameter must be greater than zero")
 	}
 
-	row, err := r.QueryRow(`SELECT 'x' FROM banner_binding WHERE id = $1`, ID)
+	row, err := r.QueryRow(`SELECT 'x' FROM banner_binding WHERE id = $1`, id)
 	if err != nil {
 		return false, repository.NewReadingError(err, "failed to execute select query")
 	}

@@ -1,196 +1,44 @@
 package rest
 
 import (
-	"errors"
-	"net/http"
-
-	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
+	"github.com/gzavodov/otus-go/banner-rotation/model"
 	"github.com/gzavodov/otus-go/banner-rotation/usecase"
 )
 
 type Group struct {
 	ucase *usecase.Group
-
-	endpoint.Handler
 }
 
-//Create creates new group
-func (h *Group) Create(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-	m, err := form.ParseGroup()
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := h.ucase.Create(m); err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h *Group) ParseEntity(form *RequestForm) (interface{}, error) {
+	return form.ParseGroup()
 }
 
-//Read reads group by ID
-func (h *Group) Read(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-	ID, err := form.ParseInt64("ID", 0)
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if ID <= 0 {
-		err = errors.New("The ID must be defined and be greater then zero")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	m, err := h.ucase.Read(ID)
-	if err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h *Group) ParseEntityIdentity(form *RequestForm) (interface{}, error) {
+	return form.ParseInt64("ID", 0)
 }
 
-//Update updates group
-func (h *Group) Update(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-
-	ID, err := form.ParseInt64("ID", 0)
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if ID <= 0 {
-		err = errors.New("The ID must be defined and be greater then zero")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	m, err := form.ParseGroup()
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	m.ID = ID
-
-	if err := h.ucase.Update(m); err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h *Group) ParseEntityCaption(form *RequestForm) (string, error) {
+	return form.ParseString("caption", "")
 }
 
-//Delete deletes group by ID
-func (h *Group) Delete(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
-
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
-
-	form := RequestForm{Request: r}
-	ID, err := form.ParseInt64("ID", 0)
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if ID <= 0 {
-		err = errors.New("The ID must be defined and be greater then zero")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := h.ucase.Delete(ID); err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+func (h *Group) CreateEntity(entity interface{}) error {
+	return h.ucase.Create(entity.(*model.Group))
 }
 
-//GetByCaption returns group by caption
-func (h *Group) GetByCaption(w http.ResponseWriter, r *http.Request) {
-	h.LogRequestURL(r)
+func (h *Group) ReadEntity(identity interface{}) (interface{}, error) {
+	return h.ucase.Read(identity.(int64))
+}
 
-	if r.Method != "POST" {
-		h.MethodNotAllowedError(w, r)
-		return
-	}
+func (h *Group) UpdateEntity(identity interface{}, entity interface{}) error {
+	m := entity.(*model.Group)
+	m.ID = identity.(int64)
+	return h.ucase.Update(m)
+}
 
-	form := RequestForm{Request: r}
-	caption, err := form.ParseString("caption", "")
-	if err != nil {
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+func (h *Group) DeleteEntity(identity interface{}) error {
+	return h.ucase.Delete(identity.(int64))
+}
 
-	if caption == "" {
-		err = errors.New("The caption must be defined and be not empty")
-		h.LogError("Request parsing", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	m, err := h.ucase.GetByCaption(caption)
-	if err != nil {
-		h.LogError("Repository", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.WriteResult(w, m); err != nil {
-		h.LogError("Response writing", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+func (h Group) GetEntityByCaption(caption string) (interface{}, error) {
+	return h.ucase.GetByCaption(caption)
 }

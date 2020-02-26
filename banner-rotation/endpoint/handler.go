@@ -27,7 +27,7 @@ type Handler struct {
 	Logger              *zap.Logger
 }
 
-//GetQualifiedName return handler qualified name (used in logging proccess)
+//GetQualifiedName return handler qualified name (used in logging process)
 func (h *Handler) GetQualifiedName() string {
 	return fmt.Sprintf("%s::%s", h.ServiceName, h.Name)
 }
@@ -36,6 +36,13 @@ func (h *Handler) GetQualifiedName() string {
 func (h *Handler) LogRequestURL(r *http.Request) {
 	if h.Logger != nil {
 		h.Logger.Info(h.GetQualifiedName(), zap.String("URL Path", r.URL.Path))
+	}
+}
+
+//Log writes message in log
+func (h *Handler) Log(msg string) {
+	if h.Logger != nil {
+		h.Logger.Info(h.GetQualifiedName(), zap.String("Message", msg))
 	}
 }
 

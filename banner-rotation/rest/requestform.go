@@ -78,7 +78,7 @@ func (f *RequestForm) ParseBanner() (*model.Banner, error) {
 		return nil, err
 	}
 
-	return &model.Banner{Caption: f.Request.FormValue("caption")}, nil
+	return &model.Banner{BaseReference: model.BaseReference{Caption: f.Request.FormValue("caption")}}, nil
 }
 
 //ParseSlot parses slot from form
@@ -87,7 +87,7 @@ func (f *RequestForm) ParseSlot() (*model.Slot, error) {
 		return nil, err
 	}
 
-	return &model.Slot{Caption: f.Request.FormValue("caption")}, nil
+	return &model.Slot{BaseReference: model.BaseReference{Caption: f.Request.FormValue("caption")}}, nil
 }
 
 //ParseGroup parses slot from form
@@ -96,7 +96,7 @@ func (f *RequestForm) ParseGroup() (*model.Group, error) {
 		return nil, err
 	}
 
-	return &model.Group{Caption: f.Request.FormValue("caption")}, nil
+	return &model.Group{BaseReference: model.BaseReference{Caption: f.Request.FormValue("caption")}}, nil
 }
 
 //ParseBinding parses banner binding from form

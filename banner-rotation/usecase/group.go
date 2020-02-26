@@ -17,16 +17,16 @@ func (c *Group) Create(m *model.Group) error {
 	return c.repo.Create(m)
 }
 
-func (c *Group) Read(ID int64) (*model.Group, error) {
-	return c.repo.Read(ID)
+func (c *Group) Read(id int64) (*model.Group, error) {
+	return c.repo.Read(id)
 }
 
 func (c *Group) Update(m *model.Group) error {
 	return c.repo.Update(m)
 }
 
-func (c *Group) Delete(ID int64) error {
-	return c.repo.Delete(ID)
+func (c *Group) Delete(id int64) error {
+	return c.repo.Delete(id)
 }
 
 func (c *Group) GetByCaption(caption string) (*model.Group, error) {

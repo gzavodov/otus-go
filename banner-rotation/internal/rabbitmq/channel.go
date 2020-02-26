@@ -95,6 +95,9 @@ func (c *Channel) Write(item *queue.Notification) error {
 		return err
 	}
 
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	return c.ch.Publish(
 		"",     // exchange
 		q.Name, // routing key

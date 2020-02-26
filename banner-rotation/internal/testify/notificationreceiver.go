@@ -67,5 +67,5 @@ label:
 		}
 	}
 
-	return fmt.Errorf("failed to receive a '%s' event notification from the integration service", eventType)
+	return fmt.Errorf("failed to receive a '%s' event notification for banner %d", eventType, bannerID)
 }

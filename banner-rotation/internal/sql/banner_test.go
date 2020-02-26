@@ -24,7 +24,7 @@ func TestBannerRepository(t *testing.T) {
 
 	t.Run("BannerRepository::Create",
 		func(t *testing.T) {
-			source := &model.Banner{Caption: "Creation Test"}
+			source := &model.Banner{BaseReference: model.BaseReference{Caption: "Creation Test"}}
 
 			if err := repo.Create(source); err != nil {
 				t.Fatal(err)
@@ -46,7 +46,7 @@ func TestBannerRepository(t *testing.T) {
 
 	t.Run("BannerRepository::Read",
 		func(t *testing.T) {
-			source := &model.Banner{Caption: "Reading Test"}
+			source := &model.Banner{BaseReference: model.BaseReference{Caption: "Reading Test"}}
 
 			if err := repo.Create(source); err != nil {
 				t.Fatal(err)
@@ -68,7 +68,7 @@ func TestBannerRepository(t *testing.T) {
 
 	t.Run("BannerRepository::Update",
 		func(t *testing.T) {
-			source := &model.Banner{Caption: "Test"}
+			source := &model.Banner{BaseReference: model.BaseReference{Caption: "Test"}}
 
 			err := repo.Create(source)
 			if err != nil {
@@ -97,7 +97,7 @@ func TestBannerRepository(t *testing.T) {
 
 	t.Run("BannerRepository::Delete",
 		func(t *testing.T) {
-			source := &model.Banner{Caption: "Deletion Test"}
+			source := &model.Banner{BaseReference: model.BaseReference{Caption: "Deletion Test"}}
 
 			err := repo.Create(source)
 			if err != nil {

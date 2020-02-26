@@ -21,7 +21,7 @@ func NewStatisticsRepository(ctx context.Context, dataSourceName string) reposit
 	return &StatisticsRepository{BaseRepository{ctx: ctx, dataSourceName: dataSourceName}}
 }
 
-//Create creates new Statistics in databse
+//Create creates new Statistics in database
 //If succseed ID field will be updated
 func (r *StatisticsRepository) Create(m *model.Statistics) error {
 	if m == nil {
@@ -44,7 +44,7 @@ func (r *StatisticsRepository) Create(m *model.Statistics) error {
 	return nil
 }
 
-//Read reads Statistics from databse by ID
+//Read reads Statistics from database by ID
 func (r *StatisticsRepository) Read(bannerID int64, groupID int64) (*model.Statistics, error) {
 	if bannerID <= 0 {
 		return nil, repository.NewInvalidArgumentError("first parameter must be greater than zero")
@@ -76,7 +76,7 @@ func (r *StatisticsRepository) Read(bannerID int64, groupID int64) (*model.Stati
 	return m, nil
 }
 
-//Update modifies Statistics in databse
+//Update modifies Statistics in database
 func (r *StatisticsRepository) Update(m *model.Statistics) error {
 	if m == nil {
 		return repository.NewInvalidArgumentError("first parameter must be not null pointer")
@@ -110,7 +110,7 @@ func (r *StatisticsRepository) Update(m *model.Statistics) error {
 	return nil
 }
 
-//Delete removes Statistics from databse
+//Delete removes Statistics from database
 func (r *StatisticsRepository) Delete(bannerID int64, groupID int64) error {
 	if bannerID <= 0 {
 		return repository.NewInvalidArgumentError("first parameter must be greater than zero")

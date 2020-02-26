@@ -37,44 +37,50 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 		return err
 	}
 
-	if defaultVal != nil {
-		if c.HTTPAddress == "" {
-			c.HTTPAddress = defaultVal.HTTPAddress
-		}
-
-		if c.LogFilePath == "" {
-			c.LogFilePath = defaultVal.LogFilePath
-		}
-
-		if c.LogLevel == "" {
-			c.LogLevel = defaultVal.LogLevel
-		}
-
-		if c.RepositoryDSN == "" {
-			c.RepositoryDSN = defaultVal.RepositoryDSN
-		}
-
-		if c.AMPQName == "" {
-			c.AMPQName = defaultVal.AMPQName
-		}
-
-		if c.AMPQAddress == "" {
-			c.AMPQAddress = defaultVal.AMPQAddress
-		}
-	}
+	c.setIfEmpty(defaultVal)
 
 	return nil
+}
+
+func (c *Configuration) setIfEmpty(source *Configuration) {
+	if source == nil {
+		return
+	}
+
+	if c.HTTPAddress == "" {
+		c.HTTPAddress = source.HTTPAddress
+	}
+
+	if c.LogFilePath == "" {
+		c.LogFilePath = source.LogFilePath
+	}
+
+	if c.LogLevel == "" {
+		c.LogLevel = source.LogLevel
+	}
+
+	if c.RepositoryDSN == "" {
+		c.RepositoryDSN = source.RepositoryDSN
+	}
+
+	if c.AMPQName == "" {
+		c.AMPQName = source.AMPQName
+	}
+
+	if c.AMPQAddress == "" {
+		c.AMPQAddress = source.AMPQAddress
+	}
 }
 
 //LoadFromFile read configuration from file
 func (c *Configuration) LoadFromFile(filePath string) error {
 	configFile, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("Could not read configuration file: %w", err)
+		return fmt.Errorf("could not read configuration file: %w", err)
 	}
 
 	if json.Unmarshal(configFile, c) != nil {
-		return fmt.Errorf("Could not internalize configuration file data: %w", err)
+		return fmt.Errorf("could not internalize configuration file data: %w", err)
 	}
 
 	return nil
@@ -96,7 +102,7 @@ func (c *Configuration) LoadFromEvironment() error {
 	if s, ok := os.LookupEnv("ALGORITHM_TYPE_ID"); ok {
 		result, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return fmt.Errorf("Could not parse ALGORITHM_TYPE_ID variable: %w", err)
+			return fmt.Errorf("could not parse ALGORITHM_TYPE_ID variable: %w", err)
 		}
 		c.AlgorithmTypeID = int(result)
 	}

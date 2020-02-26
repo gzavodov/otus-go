@@ -36,7 +36,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^Recently created banner slots are available for using:$`, t.VerifySlotsFromTable)
 
 	s.Step(`^Client creates following banners and bind to specified slots:$`, t.CreateBannersFromTable)
-	s.Step(`^Recently created banner slots are available for using and bound to apropriate slots:$`, t.VerifyBannersFromTable)
+	s.Step(`^Recently created banner slots are available for using and bound to appropriate slots:$`, t.VerifyBannersFromTable)
 
 	s.Step(`^Client makes query about banner show for following slots and social groups:$`, t.ChooseBanner)
 	s.Step(`^Client receives notification about banner show$`, t.WaitForBannerChoiseNotification)

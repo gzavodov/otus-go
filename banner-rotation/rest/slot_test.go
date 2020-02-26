@@ -29,9 +29,9 @@ func TestSlot(t *testing.T) {
 	slotRepo := sql.NewSlotRepository(ctx, conf.RepositoryDSN)
 	slotUsecase := usecase.NewSlotUsecase(slotRepo)
 
-	slotHandler := &Slot{
-		Handler: endpoint.Handler{Name: "Slot", ServiceName: "Test"},
-		ucase:   slotUsecase,
+	slotHandler := &EntityHandler{
+		Accessor: &Slot{ucase: slotUsecase},
+		Handler:  endpoint.Handler{Name: "Slot", ServiceName: "Test"},
 	}
 
 	var sourceSlot *model.Slot
