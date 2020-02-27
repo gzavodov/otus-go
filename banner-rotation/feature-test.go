@@ -281,7 +281,7 @@ func (t *FeatureTest) ChooseBanner(table *gherkin.DataTable) error {
 				return nil
 			},
 		)
-		time.Sleep(50 + time.Duration(rand.Int31n(25))*time.Millisecond)
+		time.Sleep(15 + time.Duration(rand.Int31n(75))*time.Millisecond)
 	}
 	return g.Wait()
 }

@@ -11,7 +11,7 @@ import (
 
 //NewChannel creates new RabbitMQ channel
 func NewChannel(ctx context.Context, name string, address string) *Channel {
-	return &Channel{Name: name, Address: address, ctx: ctx, mu: sync.RWMutex{}}
+	return &Channel{Name: name, Address: address, ctx: ctx, connMu: sync.RWMutex{}, chMutex: sync.RWMutex{}}
 }
 
 //Channel wrapper for amqp.Channel
@@ -23,15 +23,18 @@ type Channel struct {
 	ctx      context.Context
 	conn     *amqp.Connection
 	ch       *amqp.Channel
-	mu       sync.RWMutex
+	connMu   sync.RWMutex
+	chMutex  sync.RWMutex
+	counter  int32
 }
 
 //Open opens AMQP channel
 func (c *Channel) Open() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.connMu.Lock()
+	defer c.connMu.Unlock()
 
 	if c.isOpened {
+		c.counter++
 		return nil
 	}
 
@@ -50,21 +53,19 @@ func (c *Channel) Open() error {
 	c.conn = conn
 	c.ch = ch
 
+	c.counter++
 	return nil
 }
 
-//IsOpened сhecksf channel is opened
-func (c *Channel) IsOpened() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	return c.isOpened
-}
-
-//Close closes undelying channel and connection
+//Close closes underlying channel and connection
 func (c *Channel) Close() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.connMu.Lock()
+	defer c.connMu.Unlock()
+
+	c.counter--
+	if c.counter > 0 {
+		return
+	}
 
 	c.ch.Close()
 	c.conn.Close()
@@ -77,6 +78,9 @@ func (c *Channel) Write(item *queue.Notification) error {
 		return err
 	}
 	defer c.Close()
+
+	c.chMutex.Lock()
+	defer c.chMutex.Unlock()
 
 	q, err := c.ch.QueueDeclare(
 		c.Name, // name
@@ -94,9 +98,6 @@ func (c *Channel) Write(item *queue.Notification) error {
 	if err != nil {
 		return err
 	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	return c.ch.Publish(
 		"",     // exchange

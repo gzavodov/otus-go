@@ -61,7 +61,7 @@ func (c *Channel) IsOpened() bool {
 	return c.isOpened
 }
 
-//Close closes undelying channel and connection
+//Close closes underlying channel and connection
 func (c *Channel) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
