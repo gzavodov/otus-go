@@ -9,12 +9,6 @@ import (
 	"github.com/gzavodov/otus-go/banner-rotation/repository"
 )
 
-type AlgorithmLock struct {
-	IsBusy      bool
-	WaiterCount int
-	WaitChannel chan struct{}
-}
-
 func NewBannerUsecase(
 	bannerRepo repository.BannerRepository,
 	bindingRepo repository.BindingRepository,
@@ -27,7 +21,7 @@ func NewBannerUsecase(
 		statisticsRepo:  statisticsRepo,
 		algorithmTypeID: algorithmTypeID,
 		algorithmCache:  make(map[int64]map[int64]algorithm.MultiArmedBandit),
-		locks:           make(map[string]*AlgorithmLock),
+		locks:           make(map[string]chan struct{}),
 		algMu:           &sync.RWMutex{},
 		lockMu:          &sync.RWMutex{},
 	}
@@ -39,7 +33,7 @@ type Banner struct {
 	statisticsRepo  repository.StatisticsRepository
 	algorithmTypeID int
 
-	locks          map[string]*AlgorithmLock
+	locks          map[string]chan struct{}
 	algorithmCache map[int64]map[int64]algorithm.MultiArmedBandit
 	lockMu         *sync.RWMutex
 	algMu          *sync.RWMutex
@@ -257,61 +251,22 @@ func (c *Banner) Choose(slotID int64, groupID int64) (int64, error) {
 }
 
 func (c *Banner) waitForLock(key string) {
-	var ch chan struct{}
-
-	//isAcquired := false
-
 	c.lockMu.Lock()
-	lock, ok := c.locks[key]
-	if !ok {
-		lock = &AlgorithmLock{IsBusy: true, WaiterCount: 0, WaitChannel: make(chan struct{})}
-		c.locks[key] = lock
-		//isAcquired = true
-	} else if !lock.IsBusy {
-		lock.IsBusy = true
-		//isAcquired = true
-	} else {
-		lock.WaiterCount++
-		ch = lock.WaitChannel
+	ch := c.locks[key]
+	if ch == nil {
+		ch = make(chan struct{}, 1)
+		c.locks[key] = ch
+		ch <- struct{}{}
 	}
 	c.lockMu.Unlock()
 
-	if ch == nil {
-		return
-	}
-
-	for {
-		<-ch
-
-		isAcquired := false
-
-		c.lockMu.Lock()
-		if !lock.IsBusy {
-			lock.WaiterCount--
-			lock.IsBusy = true
-
-			isAcquired = true
-		}
-		c.lockMu.Unlock()
-
-		if isAcquired {
-			break
-		}
-	}
+	<-ch
 }
 
 func (c *Banner) releaseLock(key string) {
-	var ch chan struct{}
-
-	c.lockMu.Lock()
-	lock, ok := c.locks[key]
-	if ok {
-		lock.IsBusy = false
-		if lock.WaiterCount > 0 {
-			ch = lock.WaitChannel
-		}
-	}
-	c.lockMu.Unlock()
+	c.lockMu.RLock()
+	ch := c.locks[key]
+	c.lockMu.RUnlock()
 
 	if ch != nil {
 		ch <- struct{}{}
