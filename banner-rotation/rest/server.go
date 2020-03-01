@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	//enabling pprof debugger
+	"net/http/pprof"
 	"github.com/gzavodov/otus-go/banner-rotation/queue"
 
 	"github.com/gzavodov/otus-go/banner-rotation/endpoint"
@@ -100,6 +102,11 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/group/update", s.groupHandler.Update)
 	serverMux.HandleFunc("/group/delete", s.groupHandler.Delete)
 	serverMux.HandleFunc("/group/get-by-caption", s.groupHandler.GetByCaption)
+
+	serverMux.HandleFunc("/debug/pprof/", pprof.Index)
+	serverMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	serverMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	serverMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 
 	s.server = &http.Server{Addr: s.Address, Handler: serverMux}
 
