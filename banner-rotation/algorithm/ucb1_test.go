@@ -23,11 +23,6 @@ func createBandit(armCount int) (*UCB1, error) {
 }
 
 func play(bandit *UCB1, tryCount int) error {
-	count := len(bandit.Arms)
-	if tryCount > count {
-		tryCount = count
-	}
-
 	for i := 0; i < tryCount; i++ {
 		index := bandit.ResolveArmIndex()
 		if index < 0 {
@@ -69,6 +64,7 @@ func TestUCB1Coverage(t *testing.T) {
 		t.Fatal(fmt.Errorf("it is expected that all items will be touched after first pass, but %d items are untouched", omittedArmCount))
 	}
 }
+
 func TestUCB1Optimality(t *testing.T) {
 	armCount := 1000
 
@@ -91,8 +87,10 @@ func TestUCB1Optimality(t *testing.T) {
 	var maxReward float64
 	var maxRewardIndex int
 
+	t.Logf("	| Arm	| Count	| Reward	|\n")
 	for i := 0; i < armCount; i++ {
 		count := bandit.Arms[i].GetCount()
+
 		if maxCount < count {
 			maxCount = count
 			maxCountIndex = i
@@ -104,14 +102,15 @@ func TestUCB1Optimality(t *testing.T) {
 			maxRewardIndex = i
 		}
 
+		t.Logf("	| %d	| %d	| %f	|\n", i, count, reward)
 		totalCount += count
 	}
 
 	if totalCount != int64(tryCount) {
-		t.Errorf("it is expected that overall count will be equals to total tries count, but overall count is %d and total tries count is:%d\n", totalCount, tryCount)
+		t.Errorf("it is expected that overall count will be equals to total tries count, but overall count is %d and total tries count is %d\n", totalCount, tryCount)
 	}
 
 	if maxCountIndex != maxRewardIndex {
-		t.Errorf("it is expected that item with maximum reward will be chosen maximum times, but index of item with maximum reward is %d and index of item with maximum count is:%d\n", maxRewardIndex, maxCountIndex)
+		t.Errorf("it is expected that item with maximum reward will be chosen maximum times, but index of item with maximum reward is %d and index of item with maximum count is %d\n", maxRewardIndex, maxCountIndex)
 	}
 }
