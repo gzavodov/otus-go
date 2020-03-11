@@ -129,16 +129,16 @@ Feature: Creation of banners, banner slots, banner social groups. Binding banner
             | top-left   | elderly   |
             | top-center | teenagers |
             | top-center | teenagers |
-            | top-center | teenagers |
-            | top-center | teenagers |
-            | top-center | teenagers |
-            | top-right  | adults    |
-            | top-right  | adults    |
-            | top-right  | adults    |
             | top-right  | adults    |
             | top-right  | adults    |
             | top-left   | elderly   |
             | top-left   | elderly   |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-center | teenagers |
+            | top-right  | adults    |
+            | top-right  | adults    |
+            | top-right  | adults    |
             | top-left   | elderly   |
             | top-left   | elderly   |
             | top-left   | elderly   |

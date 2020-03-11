@@ -1,5 +1,10 @@
 package model
 
+import "fmt"
+
+//RewardValue reward is one click on shown banner
+const RewardValue = 1.0
+
 //Statistics represents statistics
 type Statistics struct {
 	BannerID       int64 `json:"bannerId"`
@@ -18,12 +23,16 @@ func (s *Statistics) SetCount(value int64) {
 	s.NumberOfShows = value
 }
 
-//GetReward implements of algorithm.Arm::GetReward(), returns reward value for multi-armed bandit arm
-func (s *Statistics) GetReward() float64 {
-	return float64(s.NumberOfClicks)
+//GetAverageReward implements of algorithm.Arm::GetAverageReward(), returns average reward for multi-armed bandit arm
+func (s *Statistics) GetAverageReward() float64 {
+	return float64(s.NumberOfClicks) / float64(s.NumberOfShows)
 }
 
-//SetReward implements of algorithm.Arm::SetReward(), assigns reward value for multi-armed bandit arm
-func (s *Statistics) SetReward(value float64) {
-	s.NumberOfClicks = int64(value)
+//AddReward implements of algorithm.Arm::AddReward(), adds reward value for multi-armed bandit arm
+func (s *Statistics) AddReward(value float64) error {
+	if value != RewardValue {
+		return fmt.Errorf("reward value %f is not allowed in current context, reward must be equals 1", value)
+	}
+	s.NumberOfClicks++
+	return nil
 }

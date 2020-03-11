@@ -9,7 +9,7 @@ import (
 )
 
 const countIncrement = 1
-const awardIncrement = 1
+const awardIncrement = 1.0
 const randomizerLimit = 10
 const randomizerThreshold = 5
 
@@ -33,7 +33,10 @@ func play(bandit *UCB1, tryCount int) error {
 
 		rand.Seed(time.Now().UnixNano())
 		if rand.Int31n(randomizerLimit) >= randomizerThreshold {
-			bandit.Arms[index].SetReward(bandit.Arms[index].GetReward() + awardIncrement)
+			err := bandit.Arms[index].AddReward(awardIncrement)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -53,9 +56,14 @@ func TestUCB1Coverage(t *testing.T) {
 		t.Error(err)
 	}
 
+	t.Logf("	| Arm	| Count	| Reward	|\n")
 	omittedArmCount := 0
 	for i := 0; i < armCount; i++ {
-		if bandit.Arms[i].GetCount() == 0 {
+		count := bandit.Arms[i].GetCount()
+		reward := bandit.Arms[i].GetAverageReward()
+
+		t.Logf("	| %d	| %d	| %f	|\n", i, count, reward)
+		if count == 0 {
 			omittedArmCount++
 		}
 	}
@@ -96,7 +104,7 @@ func TestUCB1Optimality(t *testing.T) {
 			maxCountIndex = i
 		}
 
-		reward := bandit.Arms[i].GetReward()
+		reward := bandit.Arms[i].GetAverageReward()
 		if maxReward < reward {
 			maxReward = reward
 			maxRewardIndex = i

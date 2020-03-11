@@ -23,29 +23,32 @@ func (b *UCB1) ResolveArmIndex() int {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
+	var totalCount int64
+
 	quantity := len(b.Arms)
-
-	counts := make([]int64, quantity)
-	rewards := make([]float64, quantity)
-
 	for i := 0; i < quantity; i++ {
 		arm := b.Arms[i]
 		if arm.GetCount() == 0 {
 			return i
 		}
 
-		counts[i] = arm.GetCount()
-		rewards[i] = arm.GetReward()
+		totalCount += arm.GetCount()
 	}
 
-	values := make([]float64, quantity)
-	numerator := UCB1Factor * math.Log(float64(sum(counts)))
+	maxValue := float64(0.0)
+	maxIndex := -1
+
+	numerator := UCB1Factor * math.Log(float64(totalCount))
 	for i := 0; i < quantity; i++ {
-		denominator := float64(counts[i])
-		values[i] = rewards[i] + math.Sqrt(numerator/denominator)
+		denominator := float64(b.Arms[i].GetCount())
+		value := b.Arms[i].GetAverageReward() + math.Sqrt(numerator/denominator)
+		if maxValue < value {
+			maxValue = value
+			maxIndex = i
+		}
 	}
 
-	return maxIndex(values)
+	return maxIndex
 }
 
 //RegisterArmTouch will increment arm touch count
@@ -57,11 +60,7 @@ func (b *UCB1) RegisterArmTouch(armIndex int) error {
 		return ErrorArmIndexOutOfRange
 	}
 
-	currentReward := b.Arms[armIndex].GetReward()
-	currentCount := b.Arms[armIndex].GetCount()
-
-	b.Arms[armIndex].SetReward(currentReward * float64(currentCount) / float64(currentCount+1))
-	b.Arms[armIndex].SetCount(currentCount + 1)
+	b.Arms[armIndex].SetCount(b.Arms[armIndex].GetCount() + 1)
 	return nil
 }
 
@@ -78,12 +77,7 @@ func (b *UCB1) RegisterArmReward(armIndex int, reward float64) error {
 		return ErrorInvalidReward
 	}
 
-	currentReward := b.Arms[armIndex].GetReward()
-	currentCount := b.Arms[armIndex].GetCount()
-
-	b.Arms[armIndex].SetReward((currentReward*float64(currentCount) + reward) / float64(currentCount))
-
-	return nil
+	return b.Arms[armIndex].AddReward(reward)
 }
 
 //GetCounts returns the counts
@@ -107,7 +101,7 @@ func (b *UCB1) GetRewards() []float64 {
 	quantity := len(b.Arms)
 	rewards := make([]float64, quantity)
 	for i := 0; i < quantity; i++ {
-		rewards[i] = b.Arms[i].GetReward()
+		rewards[i] = b.Arms[i].GetAverageReward()
 	}
 	return rewards
 }
