@@ -4,5 +4,5 @@ package service
 type Service interface {
 	GetServiceName() string
 	Start() error
-	Stop()
+	Stop() error
 }

@@ -88,8 +88,9 @@ func (c *Client) Start() error {
 }
 
 //Stop stop scheduler server
-func (c *Client) Stop() {
+func (c *Client) Stop() error {
 	c.once.Do(func() { c.shutdownChannel <- struct{}{} })
+	return nil
 }
 
 //LogError writes error in log

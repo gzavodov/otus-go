@@ -67,8 +67,9 @@ func (s *Server) Start() error {
 }
 
 //Stop stop scheduler server
-func (s *Server) Stop() {
+func (s *Server) Stop() error {
 	s.once.Do(func() { s.shutdownChannel <- struct{}{} })
+	return nil
 }
 
 //Check checks events and sends notification if required

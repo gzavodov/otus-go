@@ -5,8 +5,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/gzavodov/otus-go/calendar/repository"
 	"github.com/gzavodov/otus-go/calendar/pkg/endpoint"
+	"github.com/gzavodov/otus-go/calendar/repository"
 	"go.uber.org/zap"
 )
 
@@ -47,8 +47,10 @@ func (s *Server) Start() error {
 }
 
 //Stop stop handling of GRPC requests
-func (s *Server) Stop() {
+func (s *Server) Stop() error {
 	if s.GRPCServer != nil {
 		s.GRPCServer.Stop()
 	}
+
+	return nil
 }

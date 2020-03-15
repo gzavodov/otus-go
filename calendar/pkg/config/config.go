@@ -12,7 +12,8 @@ import (
 
 //Configuration Web server configuration
 type Configuration struct {
-	HTTPAddress string `json:"http_listen"`
+	HTTPAddress            string `json:"http_listen"`
+	HealthcheckHTTPAddress string `json:"healthcheck_http_listen"`
 
 	LogFilePath string `json:"log_file"`
 	LogLevel    string `json:"log_level"`
@@ -32,17 +33,22 @@ type Configuration struct {
 //Load read configuration from file anf from os environment variables
 func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 	if len(filePath) > 0 {
-		err := c.LoadFromFile(filePath)
-		if err != nil {
+		if err := c.LoadFromFile(filePath); err != nil {
 			return err
 		}
 	}
 
-	c.LoadFromEvironment()
+	if err := c.LoadFromEvironment(); err != nil {
+		return err
+	}
 
 	if defaultVal != nil {
 		if c.HTTPAddress == "" {
 			c.HTTPAddress = defaultVal.HTTPAddress
+		}
+
+		if c.HealthcheckHTTPAddress == "" {
+			c.HealthcheckHTTPAddress = defaultVal.HealthcheckHTTPAddress
 		}
 
 		if c.LogFilePath == "" {
@@ -101,9 +107,14 @@ func (c *Configuration) LoadFromFile(filePath string) error {
 
 //LoadFromEvironment read configuration from environment variables
 func (c *Configuration) LoadFromEvironment() error {
-	//End Point IP-Address
+	//End Point Address
 	if s, ok := os.LookupEnv("CALENDAR_HTTP_ADDRESS"); ok {
 		c.HTTPAddress = s
+	}
+
+	//Monitoring End Point Address
+	if s, ok := os.LookupEnv("CALENDAR_HEALTH_CHECK_HTTP_ADDRESS"); ok {
+		c.HealthcheckHTTPAddress = s
 	}
 
 	//Repository

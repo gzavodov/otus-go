@@ -8,8 +8,9 @@ require (
 	github.com/jackc/pgx v3.6.0+incompatible
 	github.com/jackc/pgx/v4 v4.1.2
 	github.com/mattn/go-shellwords v1.0.6 // indirect
+	github.com/prometheus/client_golang v1.5.0
 	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 	go.uber.org/zap v1.12.0
 	google.golang.org/grpc v1.25.1
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.5
 )
