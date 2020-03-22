@@ -2,7 +2,6 @@ package monitoring
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -16,17 +15,36 @@ func NewMiddleware(serviceName string, logger *zap.Logger) *Middleware {
 	m := &Middleware{serviceName: serviceName, logger: logger}
 
 	m.registry = prometheus.NewRegistry()
-	m.requestDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: serviceName,
-		Subsystem: "http",
-		Name:      "request_duration_seconds",
-		Help:      "The latency of the HTTP requests.",
-		Buckets:   prometheus.DefBuckets,
-	}, []string{"service", "url", "method", "code", "code_group"})
+
+	m.requestDurationHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: serviceName,
+			Subsystem: "http",
+			Name:      "request_duration_seconds",
+			Help:      "The latency of the HTTP requests.",
+			Buckets:   prometheus.DefBuckets,
+		},
+		[]string{"service", "url", "method", "code", "code_group"},
+	)
 
 	if err := m.registry.Register(m.requestDurationHistogram); err != nil {
 		log.Fatal(err)
 	}
+
+	m.requestTotalCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Subsystem: "http",
+			Name:      "request_total",
+			Help:      "The total quantity of HTTP requests.",
+		},
+		[]string{"service", "url", "method", "code", "code_group"},
+	)
+
+	if err := m.registry.Register(m.requestTotalCounter); err != nil {
+		log.Fatal(err)
+	}
+
 	return m
 }
 
@@ -42,6 +60,7 @@ type Middleware struct {
 	serviceName              string
 	registry                 *prometheus.Registry
 	requestDurationHistogram *prometheus.HistogramVec
+	requestTotalCounter      *prometheus.CounterVec
 	logger                   *zap.Logger
 }
 
@@ -61,21 +80,17 @@ func (m *Middleware) PrepareHandlerWrapper(hdlr http.Handler) http.Handler {
 		}
 
 		start := time.Now()
+		requestInfo := &RequestInfo{ServiceName: m.serviceName, URL: r.URL.Path, Method: r.Method, StatusCode: writerSink.StatusCode}
 		defer func() {
-			m.ObserveRequestDuration(
-				r.Context(),
-				&RequestInfo{ServiceName: m.serviceName, URL: r.URL.Path, Method: r.Method, StatusCode: writerSink.StatusCode},
-				time.Since(start),
-			)
+			m.ObserveRequest(r.Context(), requestInfo, time.Since(start))
 		}()
 
 		hdlr.ServeHTTP(writerSink, r)
 	})
 }
 
-func (m *Middleware) ObserveRequestDuration(ctx context.Context, info *RequestInfo, duration time.Duration) {
+func (m *Middleware) ObserveRequest(ctx context.Context, info *RequestInfo, duration time.Duration) {
 	latency := duration.Seconds()
-	m.logger.Info(m.serviceName, zap.String("Request duration, sec.", fmt.Sprintf("%.2f", latency)))
 
 	m.requestDurationHistogram.WithLabelValues(
 		info.ServiceName,
@@ -84,4 +99,12 @@ func (m *Middleware) ObserveRequestDuration(ctx context.Context, info *RequestIn
 		info.GetStatusCodeLabel(),
 		info.GetStatusCodeGroupLabel(),
 	).Observe(latency)
+
+	m.requestTotalCounter.WithLabelValues(
+		info.ServiceName,
+		info.URL,
+		info.Method,
+		info.GetStatusCodeLabel(),
+		info.GetStatusCodeGroupLabel(),
+	).Inc()
 }
