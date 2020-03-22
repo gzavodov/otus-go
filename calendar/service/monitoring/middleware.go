@@ -8,11 +8,12 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 )
 
-func NewMiddleware(serviceName string) *Middleware {
+func NewMiddleware(serviceName string, logger *zap.Logger) *Middleware {
 
-	m := &Middleware{ServiceName: serviceName}
+	m := &Middleware{ServiceName: serviceName, logger: logger}
 
 	m.registry = prometheus.NewRegistry()
 	m.requestDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -23,7 +24,11 @@ func NewMiddleware(serviceName string) *Middleware {
 		Buckets: prometheus.DefBuckets,
 	}, []string{"service", "url", "method", "code"})
 
-	m.registry.MustRegister(m.requestDurationHistogram)
+	m.logger.Info(serviceName, zap.String("Registring metric", "zg_request_duration_seconds"))
+	err := m.registry.Register(m.requestDurationHistogram)
+	if err != nil {
+		panic(err)
+	}
 	return m
 }
 
@@ -48,6 +53,7 @@ type Middleware struct {
 	ServiceName              string
 	registry                 *prometheus.Registry
 	requestDurationHistogram *prometheus.HistogramVec
+	logger                   *zap.Logger
 }
 
 func (m *Middleware) GetMetricHandler() http.Handler {
@@ -58,6 +64,8 @@ func (m *Middleware) GetMetricHandler() http.Handler {
 
 func (m *Middleware) GetCollectorHandler(hdlr http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		m.logger.Info(m.ServiceName, zap.String("Request URL", r.URL.Path))
+
 		writerSink := &ResponseWriterSink{
 			StatusCode:     http.StatusOK,
 			ResponseWriter: w,
