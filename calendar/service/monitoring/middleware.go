@@ -23,7 +23,7 @@ func NewMiddleware(serviceName string) *Middleware {
 		Buckets: prometheus.DefBuckets,
 	}, []string{"service", "url", "method", "code"})
 
-	prometheus.MustRegister(m.requestDurationHistogram)
+	m.registry.MustRegister(m.requestDurationHistogram)
 	return m
 }
 
