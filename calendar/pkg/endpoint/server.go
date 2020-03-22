@@ -1,16 +1,14 @@
 package endpoint
 
 import (
-	"github.com/gzavodov/otus-go/calendar/repository"
 	"go.uber.org/zap"
 )
 
-//Server base struct for end point services
+//Server base struct for end point service
 type Server struct {
-	Name      string
-	Address   string
-	Repo      repository.EventRepository
-	Logger    *zap.Logger
+	Name    string
+	Address string
+	Logger  *zap.Logger
 }
 
 //GetServiceName returns service name

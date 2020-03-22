@@ -2,8 +2,9 @@ package monitoring
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,59 +13,47 @@ import (
 )
 
 func NewMiddleware(serviceName string, logger *zap.Logger) *Middleware {
-
-	m := &Middleware{ServiceName: serviceName, logger: logger}
+	m := &Middleware{serviceName: serviceName, logger: logger}
 
 	m.registry = prometheus.NewRegistry()
 	m.requestDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		//Namespace: serviceName,
-		//Subsystem: "http",
-		Name:    "zg_request_duration_seconds",
-		Help:    "The latency of the HTTP requests.",
-		Buckets: prometheus.DefBuckets,
-	}, []string{"service", "url", "method", "code"})
+		Namespace: serviceName,
+		Subsystem: "http",
+		Name:      "request_duration_seconds",
+		Help:      "The latency of the HTTP requests.",
+		Buckets:   prometheus.DefBuckets,
+	}, []string{"service", "url", "method", "code", "code_group"})
 
-	m.logger.Info(serviceName, zap.String("Registring metric", "zg_request_duration_seconds"))
-	err := m.registry.Register(m.requestDurationHistogram)
-	if err != nil {
-		panic(err)
+	if err := m.registry.Register(m.requestDurationHistogram); err != nil {
+		log.Fatal(err)
 	}
 	return m
 }
 
-type RequestInfo struct {
-	ServiceName string
-	URL         string
-	Method      string
-	StatusCode  string
-}
+func WrapHandler(hdlr http.Handler, mdlw *Middleware) http.Handler {
+	if mdlw == nil {
+		return hdlr
+	}
 
-type ResponseWriterSink struct {
-	http.ResponseWriter
-	StatusCode int
-}
-
-func (w *ResponseWriterSink) WriteHeader(statusCode int) {
-	w.StatusCode = statusCode
-	w.ResponseWriter.WriteHeader(statusCode)
+	return mdlw.PrepareHandlerWrapper(hdlr)
 }
 
 type Middleware struct {
-	ServiceName              string
+	serviceName              string
 	registry                 *prometheus.Registry
 	requestDurationHistogram *prometheus.HistogramVec
 	logger                   *zap.Logger
 }
 
-func (m *Middleware) GetMetricHandler() http.Handler {
+func (m *Middleware) PrepareMetricExportHandler() http.Handler {
 	return promhttp.InstrumentMetricHandler(
 		m.registry, promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{}),
 	)
 }
 
-func (m *Middleware) GetCollectorHandler(hdlr http.Handler) http.Handler {
+func (m *Middleware) PrepareHandlerWrapper(hdlr http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		m.logger.Info(m.ServiceName, zap.String("Request URL", r.URL.Path))
+		m.logger.Info(m.serviceName, zap.String("URL Path", r.URL.Path))
 
 		writerSink := &ResponseWriterSink{
 			StatusCode:     http.StatusOK,
@@ -75,7 +64,7 @@ func (m *Middleware) GetCollectorHandler(hdlr http.Handler) http.Handler {
 		defer func() {
 			m.ObserveRequestDuration(
 				r.Context(),
-				&RequestInfo{ServiceName: m.ServiceName, URL: r.URL.Path, Method: r.Method, StatusCode: strconv.Itoa(writerSink.StatusCode)},
+				&RequestInfo{ServiceName: m.serviceName, URL: r.URL.Path, Method: r.Method, StatusCode: writerSink.StatusCode},
 				time.Since(start),
 			)
 		}()
@@ -85,5 +74,14 @@ func (m *Middleware) GetCollectorHandler(hdlr http.Handler) http.Handler {
 }
 
 func (m *Middleware) ObserveRequestDuration(ctx context.Context, info *RequestInfo, duration time.Duration) {
-	m.requestDurationHistogram.WithLabelValues(info.ServiceName, info.URL, info.Method, info.StatusCode).Observe(duration.Seconds())
+	latency := duration.Seconds()
+	m.logger.Info(m.serviceName, zap.String("Request duration, sec.", fmt.Sprintf("%.2f", latency)))
+
+	m.requestDurationHistogram.WithLabelValues(
+		info.ServiceName,
+		info.URL,
+		info.Method,
+		info.GetStatusCodeLabel(),
+		info.GetStatusCodeGroupLabel(),
+	).Observe(latency)
 }

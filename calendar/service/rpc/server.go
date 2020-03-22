@@ -13,7 +13,14 @@ import (
 //NewServer Creates new GRPC server
 func NewServer(address string, repo repository.EventRepository, logger *zap.Logger) *Server {
 	return &Server{
-		Server: endpoint.Server{Name: "GRPC", Address: address, Repo: repo, Logger: logger},
+		EventServer: endpoint.EventServer{
+			Server: endpoint.Server{
+				Name:    "GRPC",
+				Address: address,
+				Logger:  logger,
+			},
+			Repo: repo,
+		},
 	}
 }
 
@@ -22,7 +29,7 @@ type Server struct {
 	GRPCServer   *grpc.Server
 	EventHandler *EventHandler
 
-	endpoint.Server
+	endpoint.EventServer
 }
 
 //Start start handling of GRPC requests

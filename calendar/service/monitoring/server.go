@@ -5,14 +5,13 @@ import (
 	"net/http"
 
 	"github.com/gzavodov/otus-go/calendar/pkg/endpoint"
-	"github.com/gzavodov/otus-go/calendar/repository"
 	"go.uber.org/zap"
 )
 
 //NewServer Creates new Healthcheck server
-func NewServer(address string, middleware *Middleware, repo repository.EventRepository, logger *zap.Logger) *Server {
+func NewServer(address string, middleware *Middleware, logger *zap.Logger) *Server {
 	return &Server{
-		Server:     endpoint.Server{Name: "Monitoring", Address: address, Repo: repo, Logger: logger},
+		Server:     endpoint.Server{Name: "Monitoring", Address: address, Logger: logger},
 		middleware: middleware,
 	}
 }
@@ -26,7 +25,7 @@ type Server struct {
 
 //Start Start handling of Web requests
 func (s *Server) Start() error {
-	err := http.ListenAndServe(s.Address, s.middleware.GetMetricHandler())
+	err := http.ListenAndServe(s.Address, s.middleware.PrepareMetricExportHandler())
 	if err == nil || err == http.ErrServerClosed {
 		return nil
 	}
