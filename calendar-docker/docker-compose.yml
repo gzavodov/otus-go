@@ -3,6 +3,9 @@ networks:
   calendar_nw:
     driver: bridge
 
+volumes:
+  prometheus_data: {}
+
 services:
   postgres:
     image: postgres:12.1
@@ -16,7 +19,7 @@ services:
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - calendar_nw
-  rabbit:
+  rabbitmq:
     image: rabbitmq:3.7-management
     ports:
       - 15672:15672
@@ -31,10 +34,12 @@ services:
     depends_on:
       - postgres
     restart: on-failure
-    ports:
-      - 8888:8888
     expose:
       - 8888
+      - 9999
+    ports:
+      - "8888:8888"
+      - "9999:9999"
     env_file:
       - ./env/api.env
     entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh postgres:5432 -- /calendar/api --config=config.json"]
@@ -43,22 +48,42 @@ services:
   calendar_scheduler:
     build: ../calendar-scheduler
     depends_on:
-      - rabbit
+      - rabbitmq
       - calendar_api
     restart: on-failure
     env_file: 
       - ./env/scheduler.env
-    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- /calendar/scheduler --config=config.json"]
+    entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh calendar_api:8888 -- /calendar/scheduler --config=config.json"]
     networks:
       - calendar_nw
   calendar_client:
     build: ../calendar-client
     depends_on:
-      - rabbit
+      - rabbitmq
       - calendar_scheduler
     restart: on-failure
     env_file: 
       - ./env/client.env
     entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh rabbitmq:15672 -- /calendar/client --config=config.json"]
+    networks:
+      - calendar_nw
+  prometheus:
+    image: prom/prometheus:v2.16.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      # - '--web.console.libraries=/etc/prometheus/console_libraries'
+      # - '--web.console.templates=/etc/prometheus/consoles'
+      # - '--storage.tsdb.retention=120h'
+      # - '--web.enable-lifecycle'
+    # restart: unless-stopped
+    expose:
+      - 9090
+    ports:
+      - "9090:9090"
     networks:
       - calendar_nw

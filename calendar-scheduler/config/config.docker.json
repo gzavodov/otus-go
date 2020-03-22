@@ -5,5 +5,7 @@
     "ampq_type_id": 1,
     "ampq_name": "calendar-notifications",
     "ampq_address": "amqp://guest:guest@0.0.0.0:5672/",
-    "scheduler_check_interval": 60
+    "event_repository_type_id": 2,
+    "event_repository_dsn": "user=postgres password= host=127.0.0.1 port=5432 database= sslmode=disable",    
+    "scheduler_check_interval": 60   
 }

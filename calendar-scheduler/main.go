@@ -6,9 +6,9 @@ import (
 	"log"
 
 	"github.com/gzavodov/otus-go/calendar/factory/queuefactory"
+	"github.com/gzavodov/otus-go/calendar/factory/repofactory"
 	"github.com/gzavodov/otus-go/calendar/pkg/config"
 	"github.com/gzavodov/otus-go/calendar/pkg/logger"
-	"github.com/gzavodov/otus-go/calendar/service/rpc"
 	"github.com/gzavodov/otus-go/calendar/service/scheduler"
 )
 
@@ -39,6 +39,16 @@ func main() {
 	}
 	defer appLogger.Sync()
 
+	appRepo, err := repofactory.CreateEventRepository(
+		context.Background(),
+		configuration.EventRepositoryTypeID,
+		configuration.EventRepositoryDSN,
+	)
+
+	if err != nil {
+		log.Fatalf("Could not create event repository: %v", err)
+	}
+
 	queueChannel, err := queuefactory.CreateQueueChannel(
 		context.Background(),
 		configuration.AMPQTypeID,
@@ -53,7 +63,7 @@ func main() {
 	appService := scheduler.NewServer(
 		context.Background(),
 		queueChannel,
-		rpc.NewEventRepository(context.Background(), configuration.HTTPAddress),
+		appRepo,
 		configuration.SchedulerCheckInterval,
 		appLogger,
 	)
