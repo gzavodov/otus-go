@@ -6,31 +6,27 @@ import (
 
 	"github.com/gzavodov/otus-go/calendar/pkg/endpoint"
 	"github.com/gzavodov/otus-go/calendar/repository"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
 
-//NewServer Creates new Web server
-func NewServer(address string, repo repository.EventRepository, logger *zap.Logger) *Server {
+//NewServer Creates new Healthcheck server
+func NewServer(address string, middleware *Middleware, repo repository.EventRepository, logger *zap.Logger) *Server {
 	return &Server{
-		Server: endpoint.Server{Name: "Monitoring", Address: address, Repo: repo, Logger: logger},
+		Server:     endpoint.Server{Name: "Monitoring", Address: address, Repo: repo, Logger: logger},
+		middleware: middleware,
 	}
 }
 
-//Server Simple Web Server for calendar event API
+//Server Simple Healthcheck Server for calendar event API
 type Server struct {
 	HTTPServer *http.Server
-
+	middleware *Middleware
 	endpoint.Server
 }
 
 //Start Start handling of Web requests
 func (s *Server) Start() error {
-	serverMux := http.NewServeMux()
-	serverMux.Handle("/metrics", promhttp.Handler())
-	s.HTTPServer = &http.Server{Addr: s.Address, Handler: serverMux}
-
-	err := s.HTTPServer.ListenAndServe()
+	err := http.ListenAndServe(s.Address, s.middleware.GetMetricHandler())
 	if err == nil || err == http.ErrServerClosed {
 		return nil
 	}

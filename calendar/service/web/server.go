@@ -6,7 +6,7 @@ import (
 
 	"github.com/gzavodov/otus-go/calendar/pkg/endpoint"
 	"github.com/gzavodov/otus-go/calendar/repository"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/gzavodov/otus-go/calendar/service/monitoring"
 	"go.uber.org/zap"
 )
 
@@ -19,9 +19,9 @@ func NewServer(address string, repo repository.EventRepository, logger *zap.Logg
 
 //Server Simple Web Server for calendar event API
 type Server struct {
-	HTTPServer   *http.Server
-	EventHandler *EventHandler
-
+	HTTPServer           *http.Server
+	EventHandler         *EventHandler
+	MonitoringMiddleware *monitoring.Middleware
 	endpoint.Server
 }
 
@@ -38,6 +38,10 @@ func (s *Server) Start() error {
 
 	serverMux := http.NewServeMux()
 
+	//mdlw := middleware.New(middleware.Config{
+	//	Recorder: metrics.NewRecorder(metrics.Config{}),
+	//})
+
 	serverMux.HandleFunc("/create_event", s.EventHandler.Create)
 	serverMux.HandleFunc("/update_event", s.EventHandler.Update)
 	serverMux.HandleFunc("/delete_event", s.EventHandler.Delete)
@@ -45,9 +49,17 @@ func (s *Server) Start() error {
 	serverMux.HandleFunc("/events_for_week", s.EventHandler.EventsForWeek)
 	serverMux.HandleFunc("/events_for_month", s.EventHandler.EventsForMonth)
 
-	serverMux.Handle("/metrics", promhttp.Handler())
+	//s.middleware = monitoring.NewMiddleware("calendar-rest-api")
+	//handler := mdlw.Handler("", serverMux)
 
-	s.HTTPServer = &http.Server{Addr: s.Address, Handler: serverMux}
+	var handler http.Handler
+	if s.MonitoringMiddleware != nil {
+		handler = s.MonitoringMiddleware.GetCollectorHandler(serverMux)
+	} else {
+		handler = serverMux
+	}
+
+	s.HTTPServer = &http.Server{Addr: s.Address, Handler: handler}
 
 	err := s.HTTPServer.ListenAndServe()
 	if err == nil || err == http.ErrServerClosed {
