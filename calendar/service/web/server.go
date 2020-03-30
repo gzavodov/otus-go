@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gzavodov/otus-go/calendar/pkg/endpoint"
+	"github.com/gzavodov/otus-go/calendar/pkg/httpmonitoring"
 	"github.com/gzavodov/otus-go/calendar/repository"
-	"github.com/gzavodov/otus-go/calendar/service/monitoring"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +28,7 @@ func NewServer(address string, repo repository.EventRepository, logger *zap.Logg
 type Server struct {
 	HTTPServer           *http.Server
 	EventHandler         *EventHandler
-	MonitoringMiddleware *monitoring.Middleware
+	MonitoringMiddleware *httpmonitoring.Middleware
 	endpoint.EventServer
 }
 
@@ -54,7 +54,7 @@ func (s *Server) Start() error {
 
 	s.HTTPServer = &http.Server{
 		Addr:    s.Address,
-		Handler: monitoring.WrapHandler(serverMux, s.MonitoringMiddleware),
+		Handler: httpmonitoring.WrapHandler(serverMux, s.MonitoringMiddleware),
 	}
 
 	err := s.HTTPServer.ListenAndServe()

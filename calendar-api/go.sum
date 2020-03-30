@@ -60,6 +60,7 @@ github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/gzavodov/otus-go v0.0.0-20200322084303-a39bc67ea403 h1:cFWhLabjexN1Wn+uUXG2RTjX16PyJ4IerZxkG5ZvOq8=
+github.com/gzavodov/otus-go v1.0.2 h1:g74hIucuQXjyHUSeTs3xrofxdQu4v64+cxZNOOIRxKQ=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200322083220-885a422691f3 h1:/3xvZ+ZnGfJ7dpiDnQWcTDvd0G9c3A4dulJV9auy2T8=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200322083220-885a422691f3/go.mod h1:Is/r5HjJT1f1o/HMNdSVv5TugeKoj3BG9GwE9LFSrmI=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200322084303-a39bc67ea403 h1:ef0UWoFna9OX80SaIC3Bn9PoA51XkzQwbpTdyFJRh+4=
@@ -70,6 +71,7 @@ github.com/gzavodov/otus-go/calendar v0.0.0-20200322160525-357d0a1c3ee2 h1:aWt8T
 github.com/gzavodov/otus-go/calendar v0.0.0-20200322160525-357d0a1c3ee2/go.mod h1:Is/r5HjJT1f1o/HMNdSVv5TugeKoj3BG9GwE9LFSrmI=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200322183930-e4cc1d5915c4 h1:LcbsFFBldtLVDebYMZlSAPFPkLtKmbj56bV6jI8D9YM=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200322183930-e4cc1d5915c4/go.mod h1:Is/r5HjJT1f1o/HMNdSVv5TugeKoj3BG9GwE9LFSrmI=
+github.com/gzavodov/otus-go/calendar v0.0.0-20200322190258-04645b9de684 h1:msCBkIZZ4veHVmv52JgDo+sO0J6YNMwy7QKXt7ykGZw=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=

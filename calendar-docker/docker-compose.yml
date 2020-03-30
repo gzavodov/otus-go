@@ -8,22 +8,24 @@ volumes:
 
 services:
   postgres:
-    image: postgres:12.1
+    image: postgres:9.6
     ports:
-      - 5432:5432
+      - "5432:5432"
     expose:
       - 5432
     env_file:
       - ./env/db.env
     volumes:
+      - /var/lib/postgresql/data
+      - ./postgres/pg_stat_statements.sh:/docker-entrypoint-initdb.d/pg_stat_statements.sh
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - calendar_nw
   rabbitmq:
     image: rabbitmq:3.7-management
     ports:
-      - 15672:15672
-      - 5672:5672
+      - "15672:15672"
+      - "5672:5672"
     expose:
       - 15672
       - 5672
@@ -51,6 +53,10 @@ services:
       - rabbitmq
       - calendar_api
     restart: on-failure
+    expose:
+      - 8888
+    ports:
+      - "8888:8888"
     env_file: 
       - ./env/scheduler.env
     entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh calendar_api:8888 -- /calendar/scheduler --config=config.json"]
@@ -71,19 +77,36 @@ services:
     image: prom/prometheus:v2.16.0
     container_name: prometheus
     volumes:
-      - ./prometheus/:/etc/prometheus/
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/api.html:/etc/prometheus/consoles/api.html
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      # - '--web.console.libraries=/etc/prometheus/console_libraries'
-      # - '--web.console.templates=/etc/prometheus/consoles'
-      # - '--storage.tsdb.retention=120h'
-      # - '--web.enable-lifecycle'
-    # restart: unless-stopped
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention=120h"
+      - "--web.enable-lifecycle"
+    #restart: unless-stopped
     expose:
       - 9090
     ports:
       - "9090:9090"
+    networks:
+      - calendar_nw
+  postgres_exporter:
+    image: wrouesnel/postgres_exporter:v0.8.0
+    container_name: postgres_exporter
+    depends_on:
+      - postgres
+    env_file:
+      - ./env/db_monitoring_exporter.env
+    expose:
+      - 9187
+    ports:
+      - "9187:9187"
+    volumes:
+      - ./postgres_exporter:/etc/postgres_exporter
+    command: "--extend.query-path=/etc/postgres_exporter/queries.yml"
     networks:
       - calendar_nw

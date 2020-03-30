@@ -7,6 +7,7 @@ import (
 
 	"github.com/gzavodov/otus-go/calendar/model"
 	"github.com/gzavodov/otus-go/calendar/pkg/queue"
+	"github.com/gzavodov/otus-go/calendar/pkg/queuemonitoring"
 	"github.com/gzavodov/otus-go/calendar/repository"
 	"go.uber.org/zap"
 )
@@ -40,6 +41,10 @@ type Server struct {
 //GetServiceName returns service name
 func (s *Server) GetServiceName() string {
 	return "Scheduler server"
+}
+
+func (s *Server) RegisterMonitoringMiddleware(middleware *queuemonitoring.Middleware) {
+	s.channel = queuemonitoring.WrapChannel(s.channel, middleware)
 }
 
 //Start starts scheduler server

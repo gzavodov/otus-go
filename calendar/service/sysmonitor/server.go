@@ -1,17 +1,18 @@
-package monitoring
+package sysmonitor
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/gzavodov/otus-go/calendar/pkg/endpoint"
+	"github.com/gzavodov/otus-go/calendar/pkg/monitoring"
 	"go.uber.org/zap"
 )
 
 //NewServer Creates new Healthcheck server
-func NewServer(address string, middleware *Middleware, logger *zap.Logger) *Server {
+func NewServer(address string, middleware monitoring.Middleware, logger *zap.Logger) *Server {
 	return &Server{
-		Server:     endpoint.Server{Name: "Monitoring", Address: address, Logger: logger},
+		Server:     endpoint.Server{Name: "System Monitoring", Address: address, Logger: logger},
 		middleware: middleware,
 	}
 }
@@ -19,7 +20,7 @@ func NewServer(address string, middleware *Middleware, logger *zap.Logger) *Serv
 //Server Simple Healthcheck Server for calendar event API
 type Server struct {
 	HTTPServer *http.Server
-	middleware *Middleware
+	middleware monitoring.Middleware
 	endpoint.Server
 }
 

@@ -1,4 +1,4 @@
-package monitoring
+package httpmonitoring
 
 import "net/http"
 

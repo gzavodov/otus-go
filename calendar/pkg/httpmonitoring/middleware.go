@@ -1,4 +1,4 @@
-package monitoring
+package httpmonitoring
 
 import (
 	"context"
@@ -80,9 +80,17 @@ func (m *Middleware) PrepareHandlerWrapper(hdlr http.Handler) http.Handler {
 		}
 
 		start := time.Now()
-		requestInfo := &RequestInfo{ServiceName: m.serviceName, URL: r.URL.Path, Method: r.Method, StatusCode: writerSink.StatusCode}
 		defer func() {
-			m.ObserveRequest(r.Context(), requestInfo, time.Since(start))
+			m.ObserveRequest(
+				r.Context(),
+				&RequestInfo{
+					ServiceName: m.serviceName,
+					URL:         r.URL.Path,
+					Method:      r.Method,
+					StatusCode:  writerSink.StatusCode,
+				},
+				time.Since(start),
+			)
 		}()
 
 		hdlr.ServeHTTP(writerSink, r)

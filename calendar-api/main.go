@@ -8,8 +8,9 @@ import (
 
 	"github.com/gzavodov/otus-go/calendar/factory/repofactory"
 	"github.com/gzavodov/otus-go/calendar/pkg/config"
+	"github.com/gzavodov/otus-go/calendar/pkg/httpmonitoring"
 	"github.com/gzavodov/otus-go/calendar/pkg/logger"
-	"github.com/gzavodov/otus-go/calendar/service/monitoring"
+	"github.com/gzavodov/otus-go/calendar/service/sysmonitor"
 	"github.com/gzavodov/otus-go/calendar/service/web"
 )
 
@@ -50,23 +51,19 @@ func main() {
 		log.Fatalf("Could not create event repository: %v", err)
 	}
 
-	appMonitoring := monitoring.NewMiddleware("api", appLogger)
+	webMonitoring := httpmonitoring.NewMiddleware("api", appLogger)
 
 	wg := &sync.WaitGroup{}
 
-	//RPS
-	//rate(api_http_request_total[1h])
-	//Errors
-	//sum by (code_group) (api_http_request_total)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		healthCheckService := monitoring.NewServer(configuration.HealthcheckHTTPAddress, appMonitoring, appLogger)
-		log.Printf("Starting %s service on %s...\n", healthCheckService.GetServiceName(), configuration.HealthcheckHTTPAddress)
+		sysMonitoringService := sysmonitor.NewServer(configuration.HealthcheckHTTPAddress, webMonitoring, appLogger)
+		log.Printf("Starting %s service on %s...\n", sysMonitoringService.GetServiceName(), configuration.HealthcheckHTTPAddress)
 
-		if err = healthCheckService.Start(); err != nil {
-			log.Fatalf("Could not start Health Check Service: %v", err)
+		if err = sysMonitoringService.Start(); err != nil {
+			log.Fatalf("Could not start System Monitoring Service: %v", err)
 		}
 	}()
 
@@ -75,7 +72,7 @@ func main() {
 		defer wg.Done()
 
 		appService := web.NewServer(configuration.HTTPAddress, appRepo, appLogger)
-		appService.MonitoringMiddleware = appMonitoring
+		appService.MonitoringMiddleware = webMonitoring
 		log.Printf("Starting %s service on %s...\n", appService.GetServiceName(), configuration.HTTPAddress)
 		if err = appService.Start(); err != nil {
 			log.Fatalf("Could not start RPC Service: %v", err)

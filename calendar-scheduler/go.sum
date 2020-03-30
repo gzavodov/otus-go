@@ -27,8 +27,10 @@ github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5y
 github.com/google/go-cmp v0.2.0 h1:+dTQ8DZQJz0Mb/HjFlkptS1FeQ4cWSnN941F8aEG4SQ=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
+github.com/gzavodov/otus-go v1.0.2 h1:g74hIucuQXjyHUSeTs3xrofxdQu4v64+cxZNOOIRxKQ=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200106171839-618dc5327804 h1:dOr75fNHqJ+vplGA0KzV93ZmJockkPTB4KU5eE53MZE=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200106171839-618dc5327804/go.mod h1:rOAKVST+VrfYRJzrLbsXm04nhKyE9kDT9UIdJVoH9Vs=
+github.com/gzavodov/otus-go/calendar v0.0.0-20200322190258-04645b9de684 h1:msCBkIZZ4veHVmv52JgDo+sO0J6YNMwy7QKXt7ykGZw=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=
 github.com/jackc/chunkreader v1.0.0/go.mod h1:RT6O25fNZIuasFJRyZ4R/Y2BbhasbmZXF9QQ7T3kePo=
 github.com/jackc/chunkreader/v2 v2.0.0 h1:DUwgMQuuPnS0rhMXenUtZpqZqrR/30NWY+qQvTpSvEs=
