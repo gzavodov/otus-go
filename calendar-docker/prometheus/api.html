@@ -1,0 +1,78 @@
+{{ template "head" . }}
+{{ template "prom_content_head" . }}
+<br>
+<h5>HTTP Endpoint</h5>
+<h6>HTTP Requests Latency (Average Latency of HTTP Requests)</h6>
+<div id="http_request_latency"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#http_request_latency"),
+  expr: 'histogram_quantile(0.5, rate(api_http_request_duration_seconds_bucket[30m]))',
+  yTitle: "HTTP Requests Latency"
+})
+</script>
+
+<h6>RPS (HTTP Requests per Second)</h6>
+<div id="http_rps"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#http_rps"),
+  expr: 'rate(api_http_request_total[30m])',
+  yTitle: "HTTP RPS"
+})
+</script>
+
+<h6>HTTP Response Error Count by URL (response code groups: 400, 500)</h6>
+<div id="http_error_count"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#http_error_count"),
+  expr: 'api_http_request_total{code_group=~"400|500"}',
+  yTitle: "HTTP Response Errors Rate"
+})
+</script>
+
+<h6>HTTP Response Error Rate by URL (response code groups: 400, 500)</h6>
+<div id="http_error_rate"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#http_error_rate"),
+  expr: 'rate(api_http_request_total{code_group=~"400|500"}[30m])',
+  yTitle: "HTTP Response Error Rate"
+})
+</script>
+
+<h5>Database</h5>
+
+<h6>Database TPS (Transactions Per Second)</h6>
+<div id="db_tps"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#db_tps"),
+  expr: 'rate(pg_stat_database_xact_commit{datname="calendar"}[30m]) + rate(pg_stat_database_xact_rollback{datname="calendar"}[30m])',
+  yTitle: "Database TPS"
+})
+</script>
+
+<h6>Database Connection Count</h6>
+<div id="db_connection_count"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#db_connection_count"),
+  expr: 'pg_stat_database_numbackends{datname="calendar"}',
+  yTitle: "Database Connection Count"
+})
+</script>
+
+<h6>Approximate Rows Count in Event Table</h6>
+<div id="db_event_count"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#db_event_count"),
+  expr: 'pg_stat_user_tables_n_live_tup{datname="calendar",relname="events"}',
+  yTitle: "Approx. Row Count in Event Table"
+})
+</script>
+
+{{ template "prom_content_tail" . }}
+{{ template "tail" }}
