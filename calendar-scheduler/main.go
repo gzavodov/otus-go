@@ -67,17 +67,19 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	if configuration.HealthcheckHTTPAddress != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		sysMonitoringService := sysmonitor.NewServer(configuration.HealthcheckHTTPAddress, queueMonitoring, appLogger)
-		log.Printf("Starting %s service on %s...\n", sysMonitoringService.GetServiceName(), configuration.HealthcheckHTTPAddress)
+			sysMonitoringService := sysmonitor.NewServer(configuration.HealthcheckHTTPAddress, queueMonitoring, appLogger)
+			log.Printf("Starting %s service on %s...\n", sysMonitoringService.GetServiceName(), configuration.HealthcheckHTTPAddress)
 
-		if err = sysMonitoringService.Start(); err != nil {
-			log.Fatalf("Could not start System Monitoring Service: %v", err)
-		}
-	}()
+			if err = sysMonitoringService.Start(); err != nil {
+				log.Fatalf("Could not start System Monitoring Service: %v", err)
+			}
+		}()
+	}
 
 	wg.Add(1)
 	go func() {
