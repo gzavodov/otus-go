@@ -69,8 +69,18 @@ new PromConsole.Graph({
 <script>
 new PromConsole.Graph({
   node: document.querySelector("#db_event_count"),
-  expr: 'pg_stat_user_tables_n_live_tup{datname="calendar",relname="events"}',
+  expr: 'pg_stat_user_tables_n_live_tup{datname="calendar",relname="event"}',
   yTitle: "Approx. Row Count in Event Table"
+})
+</script>
+
+<h6>MPS (AMPQ Messages per Second)</h6>
+<div id="ampq_rps"></div>
+<script>
+new PromConsole.Graph({
+  node: document.querySelector("#ampq_rps"),
+  expr: 'rate(api_ampq_total_sent[30m])',
+  yTitle: "AMPQ MPS (Message Service Messages per Second)"
 })
 </script>
 

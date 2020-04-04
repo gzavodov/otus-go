@@ -8,11 +8,9 @@ volumes:
 
 services:
   postgres:
-    image: postgres:9.6
+    image: postgres:11
     ports:
       - "5432:5432"
-    expose:
-      - 5432
     env_file:
       - ./env/db.env
     volumes:
@@ -26,9 +24,6 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
-    expose:
-      - 15672
-      - 5672
     networks:
       - calendar_nw
   calendar_api:
@@ -36,11 +31,8 @@ services:
     depends_on:
       - postgres
     restart: on-failure
-    expose:
-      - 8888
-      - 9999
     ports:
-      - "8888:8888"
+      - "8880:8880"
       - "9999:9999"
     env_file:
       - ./env/api.env
@@ -53,10 +45,8 @@ services:
       - rabbitmq
       - calendar_api
     restart: on-failure
-    expose:
-      - 8888
     ports:
-      - "8888:8888"
+      - "8881:8881"
     env_file: 
       - ./env/scheduler.env
     entrypoint: ["bash", "-c", "/usr/bin/wait-for-it.sh calendar_api:8888 -- /calendar/scheduler --config=config.json"]
@@ -88,21 +78,17 @@ services:
       - "--storage.tsdb.retention=120h"
       - "--web.enable-lifecycle"
     #restart: unless-stopped
-    expose:
-      - 9090
     ports:
       - "9090:9090"
     networks:
       - calendar_nw
-  postgres_exporter:
+  pgexporter:
     image: wrouesnel/postgres_exporter:v0.8.0
-    container_name: postgres_exporter
+    container_name: pgexporter
     depends_on:
       - postgres
     env_file:
       - ./env/db_monitoring_exporter.env
-    expose:
-      - 9187
     ports:
       - "9187:9187"
     volumes:

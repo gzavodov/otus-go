@@ -18,7 +18,7 @@ func NewMiddleware(serviceName string, logger *zap.Logger) *Middleware {
 	m.sendingCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: serviceName,
-			Subsystem: "queue",
+			Subsystem: "ampq",
 			Name:      "total_sent",
 			Help:      "The total quantity of sent messages.",
 		},
