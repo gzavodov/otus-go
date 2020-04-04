@@ -10,6 +10,7 @@ import (
 	"github.com/gzavodov/otus-go/calendar/pkg/config"
 	"github.com/gzavodov/otus-go/calendar/pkg/httpmonitoring"
 	"github.com/gzavodov/otus-go/calendar/pkg/logger"
+	"github.com/gzavodov/otus-go/calendar/service/rpc"
 	"github.com/gzavodov/otus-go/calendar/service/sysmonitor"
 	"github.com/gzavodov/otus-go/calendar/service/web"
 )
@@ -51,33 +52,55 @@ func main() {
 		log.Fatalf("Could not create event repository: %v", err)
 	}
 
-	webMonitoring := httpmonitoring.NewMiddleware("api", appLogger)
-
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	if configuration.HTTPAddress != "" {
+		var webMonitoring *httpmonitoring.Middleware
 
-		sysMonitoringService := sysmonitor.NewServer(configuration.HealthcheckHTTPAddress, webMonitoring, appLogger)
-		log.Printf("Starting %s service on %s...\n", sysMonitoringService.GetServiceName(), configuration.HealthcheckHTTPAddress)
+		if configuration.HealthcheckHTTPAddress != "" {
+			wg.Add(1)
 
-		if err = sysMonitoringService.Start(); err != nil {
-			log.Fatalf("Could not start System Monitoring Service: %v", err)
+			webMonitoring = httpmonitoring.NewMiddleware("api", appLogger)
+			go func() {
+				defer wg.Done()
+
+				sysMonitoringService := sysmonitor.NewServer(configuration.HealthcheckHTTPAddress, webMonitoring, appLogger)
+				log.Printf("Starting %s service on %s...\n", sysMonitoringService.GetServiceName(), configuration.HealthcheckHTTPAddress)
+
+				if err = sysMonitoringService.Start(); err != nil {
+					log.Fatalf("Could not start System Monitoring Service: %v", err)
+				}
+			}()
 		}
-	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		appService := web.NewServer(configuration.HTTPAddress, appRepo, appLogger)
-		appService.MonitoringMiddleware = webMonitoring
-		log.Printf("Starting %s service on %s...\n", appService.GetServiceName(), configuration.HTTPAddress)
-		if err = appService.Start(); err != nil {
-			log.Fatalf("Could not start RPC Service: %v", err)
-		}
-	}()
+			httpService := web.NewServer(configuration.HTTPAddress, appRepo, appLogger)
+			if webMonitoring != nil {
+				httpService.MonitoringMiddleware = webMonitoring
+			}
+
+			log.Printf("Starting %s service on %s...\n", httpService.GetServiceName(), configuration.HTTPAddress)
+			if err = httpService.Start(); err != nil {
+				log.Fatalf("Could not start %s Service: %v", httpService.GetServiceName(), err)
+			}
+		}()
+	}
+
+	if configuration.GRPCAddress != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			grpcService := rpc.NewServer(configuration.GRPCAddress, appRepo, appLogger)
+			log.Printf("Starting %s service on %s...\n", grpcService.GetServiceName(), configuration.GRPCAddress)
+			if err = grpcService.Start(); err != nil {
+				log.Fatalf("Could not start %s Service: %v", grpcService.GetServiceName(), err)
+			}
+		}()
+	}
 
 	wg.Wait()
 }
