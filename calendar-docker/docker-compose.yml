@@ -33,6 +33,7 @@ services:
     restart: on-failure
     ports:
       - "8880:8880"
+      - "8888:8888"
       - "9999:9999"
     env_file:
       - ./env/api.env
