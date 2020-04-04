@@ -42,7 +42,7 @@ func NewEvent(ctx context.Context, conf *config.Configuration) (*Event, error) {
 	notifications := NewNotificationReceiver(notificationChannel)
 
 	return &Event{
-			Repo: rpc.NewEventRepository(ctx, conf.HTTPAddress),
+			Repo: rpc.NewEventRepository(ctx, conf.GRPCAddress),
 			Client: scheduler.NewClient(
 				ctx,
 				queueChannel,
