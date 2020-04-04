@@ -93,6 +93,10 @@ func (h *EventHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if event.NotifyBefore == 0 {
+		event.NotifyBefore = 15 * time.Minute
+	}
+
 	if err := h.ValidateEvent(event); err != nil {
 		h.LogError("Validation", err)
 		if err = h.WriteEventResult(w, EventError{Error: err.Error()}); err != nil {

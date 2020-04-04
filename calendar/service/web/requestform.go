@@ -100,6 +100,15 @@ func (f *RequestForm) ParseEvent() (*model.Event, error) {
 		}
 	}
 
+	notifyBefore := 30 * time.Minute
+	str = f.Request.FormValue("NotifyBefore")
+	if len(str) > 0 {
+		notifyBefore, err = time.ParseDuration(str)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse NotifyBefore form \"%s\" (%w)", str, err)
+		}
+	}
+
 	calendarID := int64(0)
 	str = f.Request.FormValue("CalendarID")
 	if len(str) > 0 {
@@ -110,13 +119,14 @@ func (f *RequestForm) ParseEvent() (*model.Event, error) {
 	}
 
 	return &model.Event{
-			Title:       title,
-			Description: description,
-			Location:    location,
-			StartTime:   startTime,
-			EndTime:     endTime,
-			UserID:      userID,
-			CalendarID:  calendarID,
+			Title:        title,
+			Description:  description,
+			Location:     location,
+			StartTime:    startTime,
+			EndTime:      endTime,
+			NotifyBefore: notifyBefore,
+			UserID:       userID,
+			CalendarID:   calendarID,
 		},
 		nil
 }
