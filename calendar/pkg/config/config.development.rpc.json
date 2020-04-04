@@ -1,5 +1,5 @@
 {
-    "http_listen": "127.0.0.1:9999",
+    "grpc_listen": "127.0.0.1:9999",
     "healthcheck_http_listen": "127.0.0.1:8888",
     "log_file": "log.json",
     "log_level": "debug",

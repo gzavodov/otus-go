@@ -37,7 +37,7 @@ func CreateService(ctx context.Context, conf *config.Configuration, logger *zap.
 			return nil, fmt.Errorf("could not create repository (%w)", err)
 		}
 
-		return web.NewServer(conf.HTTPAddress, repo, logger), nil
+		return web.NewServer(conf.GRPCAddress, repo, logger), nil
 	case TypeGRPC:
 		repo, err := repofactory.CreateEventRepository(
 			ctx,

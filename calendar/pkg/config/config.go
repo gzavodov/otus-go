@@ -12,8 +12,9 @@ import (
 
 //Configuration Web server configuration
 type Configuration struct {
-	HTTPAddress            string `json:"http_listen"`
 	HealthcheckHTTPAddress string `json:"healthcheck_http_listen"`
+	HTTPAddress            string `json:"http_listen"`
+	GRPCAddress            string `json:"grpc_listen"`
 
 	LogFilePath string `json:"log_file"`
 	LogLevel    string `json:"log_level"`
@@ -45,6 +46,10 @@ func (c *Configuration) Load(filePath string, defaultVal *Configuration) error {
 	if defaultVal != nil {
 		if c.HTTPAddress == "" {
 			c.HTTPAddress = defaultVal.HTTPAddress
+		}
+
+		if c.GRPCAddress == "" {
+			c.GRPCAddress = defaultVal.GRPCAddress
 		}
 
 		if c.HealthcheckHTTPAddress == "" {
@@ -107,9 +112,14 @@ func (c *Configuration) LoadFromFile(filePath string) error {
 
 //LoadFromEvironment read configuration from environment variables
 func (c *Configuration) LoadFromEvironment() error {
-	//End Point Address
+	//HTTP End Point Address
 	if s, ok := os.LookupEnv("CALENDAR_HTTP_ADDRESS"); ok {
 		c.HTTPAddress = s
+	}
+
+	//GRPC End Point Address
+	if s, ok := os.LookupEnv("CALENDAR_GRPC_ADDRESS"); ok {
+		c.GRPCAddress = s
 	}
 
 	//Monitoring End Point Address
