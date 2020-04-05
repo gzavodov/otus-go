@@ -18,7 +18,7 @@ func (h *EventHandler) Create(ctx context.Context, in *Event) (*Event, error) {
 
 	eventModel, err := CreateEventModel(in)
 	if err != nil {
-		response.LogAndReply(nil, ErrorCategoryInternalization, err)
+		return response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
 	err = ValidateEventModel(eventModel)
@@ -51,7 +51,7 @@ func (h *EventHandler) Update(ctx context.Context, in *Event) (*Event, error) {
 
 	eventModel, err := CreateEventModel(in)
 	if err != nil {
-		response.LogAndReply(nil, ErrorCategoryInternalization, err)
+		return response.LogAndReply(nil, ErrorCategoryInternalization, err)
 	}
 
 	err = ValidateEventModel(eventModel)

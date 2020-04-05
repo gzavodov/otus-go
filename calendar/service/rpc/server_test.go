@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -17,7 +18,12 @@ func TestGRPCService(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not initialize logger: %v", err)
 	}
-	defer appLogger.Sync()
+
+	defer func() {
+		if err := appLogger.Sync(); err != nil {
+			log.Fatalf("could not flush logger write buffers: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -34,14 +40,14 @@ func TestGRPCService(t *testing.T) {
 	go func() {
 		err := server.Start()
 		if err != nil {
-			t.Fatalf("Could not start server: %v", err)
+			log.Fatalf("Could not start server: %v", err)
 		}
 	}()
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			server.Stop()
+		<-ctx.Done()
+		if err := server.Stop(); err != nil {
+			log.Fatalf("Could not start server: %v", err)
 		}
 	}()
 
