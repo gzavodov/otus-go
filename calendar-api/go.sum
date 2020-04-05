@@ -62,6 +62,8 @@ github.com/gzavodov/otus-go/banner-rotation v0.0.0-20200322190258-04645b9de684/g
 github.com/gzavodov/otus-go/calendar v0.0.0-20200126172117-3b9346e013f2/go.mod h1:rOAKVST+VrfYRJzrLbsXm04nhKyE9kDT9UIdJVoH9Vs=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200405121648-7f255d0998ca h1:sKOBJW8XkHoVkgZFWWXGFdePTzHfVrxvKzl8cKt4Utw=
 github.com/gzavodov/otus-go/calendar v0.0.0-20200405121648-7f255d0998ca/go.mod h1:7lIQY0Q7/QY/mvI1ZNQDH2Z9SzvuK2AvNXpMnK5yIDw=
+github.com/gzavodov/otus-go/calendar v0.0.0-20200405172142-2515d657d86a h1:31UJ5+gziFitZq39xrYOEaZ1sJ0U5ZIPvwCaB0mA7fc=
+github.com/gzavodov/otus-go/calendar v0.0.0-20200405172142-2515d657d86a/go.mod h1:7lIQY0Q7/QY/mvI1ZNQDH2Z9SzvuK2AvNXpMnK5yIDw=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=
