@@ -36,6 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not initialize zap logger: %v", err)
 	}
+
 	defer appLogger.Sync()
 
 	queueChannel, err := queuefactory.CreateQueueChannel(
