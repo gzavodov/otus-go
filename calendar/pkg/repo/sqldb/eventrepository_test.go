@@ -67,7 +67,9 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(CouldNotCreateObjectError())
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 
 	t.Run("EventRepository::Read",
@@ -94,7 +96,9 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectNotMatchedError(source, result))
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 
 	t.Run("EventRepository::ReadList",
@@ -139,7 +143,9 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectListNotMatchedError(sources, results))
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 	t.Run("EventRepository::Update",
 		func(t *testing.T) {
@@ -171,7 +177,9 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectNotMatchedError(source, result))
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 
 	t.Run("EventRepository::Delete & IsExists",
@@ -202,7 +210,9 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(CouldNotRemoveObjectError())
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 	t.Run("EventRepository::ReadAll && GetTotalCount",
 		func(t *testing.T) {
@@ -261,7 +271,9 @@ func TestSQLDbRepository(t *testing.T) {
 				}
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 	t.Run("EventRepository::ReadNotificationList",
 		func(t *testing.T) {
@@ -320,6 +332,8 @@ func TestSQLDbRepository(t *testing.T) {
 				t.Error(ObjectListNotMatchedError(sources, results))
 			}
 
-			repo.purge()
+			if err := repo.purge(); err != nil {
+				t.Error(err)
+			}
 		})
 }

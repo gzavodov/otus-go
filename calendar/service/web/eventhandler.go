@@ -63,8 +63,8 @@ func (h *EventHandler) WriteEventResult(w http.ResponseWriter, eventResult inter
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(output)
-	return nil
+	_, err = w.Write(output)
+	return err
 }
 
 //MethodNotAllowedError writes 405 (StatusMethodNotAllowed) code in response
