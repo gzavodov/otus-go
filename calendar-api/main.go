@@ -40,7 +40,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not initialize zap logger: %v", err)
 	}
-	defer appLogger.Sync()
+
+	defer func() {
+		if err := appLogger.Sync(); err != nil {
+			log.Fatalf("could not flush logger write buffers: %v", err)
+		}
+	}()
 
 	appRepo, err := repofactory.CreateEventRepository(
 		context.Background(),
