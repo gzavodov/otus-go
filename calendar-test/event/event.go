@@ -3,6 +3,7 @@ package event
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -69,7 +70,9 @@ type Event struct {
 func (t *Event) Start(outline interface{}) {
 	go func(client *scheduler.Client) {
 		if client != nil {
-			client.Start()
+			if err := client.Start(); err != nil {
+				log.Fatalf("failed to start scheduler client: %v", err)
+			}
 		}
 	}(t.Client)
 }
@@ -78,7 +81,9 @@ func (t *Event) Start(outline interface{}) {
 func (t *Event) Stop(outline interface{}, err error) {
 	go func(client *scheduler.Client) {
 		if client != nil {
-			client.Stop()
+			if err := client.Stop(); err != nil {
+				log.Fatalf("failed to stop scheduler client: %v", err)
+			}
 		}
 	}(t.Client)
 }
